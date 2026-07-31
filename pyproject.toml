@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "continuity-core"
+version = "0.1.0"
+description = "Portable identity continuity compiler for long-running AI companions"
+requires-python = ">=3.10"
+authors = [
+  {name = "KAi"},
+  {name = "Alina Pochinova"}
+]
+license = {text = "All rights reserved"}
+dependencies = []
+
+[project.scripts]
+continuity = "continuity_core.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
