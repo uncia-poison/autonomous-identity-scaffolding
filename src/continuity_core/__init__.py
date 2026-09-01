@@ -1,4 +1,4 @@
-"""Continuity Core MVP."""
+"""Continuity Core v0.1 compatibility layer."""
 
 from .compiler import build_identity_bundle, compile_profile
 from .drift import evaluate_drift

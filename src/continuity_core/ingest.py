@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from .models import Turn
-
 
 ROLE_ALIASES = {
     "assistant": "assistant",
@@ -57,18 +57,17 @@ def _turn_from_record(record: dict[str, Any], fallback_id: str) -> Turn | None:
 
 
 def _walk_chatgpt_mapping(mapping: dict[str, Any]) -> list[Turn]:
-    nodes = mapping
-    leaves = [node_id for node_id, node in nodes.items() if not node.get("children")]
+    leaves = [node_id for node_id, node in mapping.items() if not node.get("children")]
     if not leaves:
-        leaves = list(nodes)
+        leaves = list(mapping)
 
     def path_to_root(node_id: str) -> list[dict[str, Any]]:
         out: list[dict[str, Any]] = []
         seen: set[str] = set()
         current = node_id
-        while current and current not in seen and current in nodes:
+        while current and current not in seen and current in mapping:
             seen.add(current)
-            node = nodes[current]
+            node = mapping[current]
             message = node.get("message")
             if isinstance(message, dict):
                 out.append(message)
@@ -87,20 +86,19 @@ def _walk_chatgpt_mapping(mapping: dict[str, Any]) -> list[Turn]:
 def _parse_json(payload: Any) -> list[Turn]:
     if isinstance(payload, dict) and isinstance(payload.get("mapping"), dict):
         return _walk_chatgpt_mapping(payload["mapping"])
-
     if isinstance(payload, dict):
         for key in ("messages", "conversation", "turns", "items"):
             if isinstance(payload.get(key), list):
                 payload = payload[key]
                 break
-
     if isinstance(payload, list):
-        if payload and all(isinstance(item, dict) and isinstance(item.get("mapping"), dict) for item in payload):
+        if payload and all(
+            isinstance(item, dict) and isinstance(item.get("mapping"), dict) for item in payload
+        ):
             turns: list[Turn] = []
             for item in payload:
                 turns.extend(_walk_chatgpt_mapping(item["mapping"]))
             return turns
-
         turns = []
         for index, record in enumerate(payload):
             if not isinstance(record, dict):
@@ -109,7 +107,6 @@ def _parse_json(payload: Any) -> list[Turn]:
             if turn:
                 turns.append(turn)
         return turns
-
     raise ValueError("Unsupported JSON transcript structure")
 
 
@@ -141,7 +138,7 @@ def _parse_text(text: str) -> list[Turn]:
         if matched:
             flush()
             current_role = markers[matched]
-            buffer.append(stripped[len(matched):].lstrip())
+            buffer.append(stripped[len(matched) :].lstrip())
         else:
             buffer.append(line)
     flush()

@@ -1,0 +1,115 @@
+{
+  "$defs": {
+    "StorageConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "backend": {
+          "default": "filesystem",
+          "enum": [
+            "filesystem",
+            "s3"
+          ],
+          "title": "Backend",
+          "type": "string"
+        },
+        "bucket": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bucket"
+        },
+        "endpoint_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Endpoint Url"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Path"
+        },
+        "prefix": {
+          "default": "acs",
+          "title": "Prefix",
+          "type": "string"
+        }
+      },
+      "title": "StorageConfig",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "api_base_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Api Base Url"
+    },
+    "model": {
+      "title": "Model",
+      "type": "string"
+    },
+    "ollama_url": {
+      "default": "http://127.0.0.1:11434",
+      "title": "Ollama Url",
+      "type": "string"
+    },
+    "recall_limit": {
+      "default": 8,
+      "maximum": 32,
+      "minimum": 1,
+      "title": "Recall Limit",
+      "type": "integer"
+    },
+    "runtime_variant": {
+      "enum": [
+        "local",
+        "api"
+      ],
+      "title": "Runtime Variant",
+      "type": "string"
+    },
+    "schema_version": {
+      "default": "acs.workspace.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "storage": {
+      "$ref": "#/$defs/StorageConfig"
+    }
+  },
+  "required": [
+    "runtime_variant",
+    "model",
+    "storage"
+  ],
+  "title": "WorkspaceConfig",
+  "type": "object"
+}

@@ -1,0 +1,69 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "character_id": {
+      "default": "neutral_agent_v1",
+      "title": "Character Id",
+      "type": "string"
+    },
+    "disagreement_policy": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Disagreement Policy",
+      "type": "object"
+    },
+    "display_name": {
+      "default": "ACS Agent",
+      "title": "Display Name",
+      "type": "string"
+    },
+    "interests": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Interests",
+      "type": "array"
+    },
+    "invariants": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Invariants",
+      "type": "array"
+    },
+    "revision_policy": {
+      "additionalProperties": true,
+      "title": "Revision Policy",
+      "type": "object"
+    },
+    "style_contracts": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Style Contracts",
+      "type": "array"
+    },
+    "values": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "title": "Values",
+      "type": "object"
+    },
+    "version": {
+      "default": "1.0",
+      "title": "Version",
+      "type": "string"
+    },
+    "vetoes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Vetoes",
+      "type": "array"
+    }
+  },
+  "title": "CharacterGenome",
+  "type": "object"
+}

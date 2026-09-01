@@ -1,0 +1,66 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "active_doubts": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Active Doubts",
+      "type": "array"
+    },
+    "current_goals": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Current Goals",
+      "type": "array"
+    },
+    "drift_alerts": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Drift Alerts",
+      "type": "array"
+    },
+    "identity_summary": {
+      "default": "No self-authored summary yet.",
+      "title": "Identity Summary",
+      "type": "string"
+    },
+    "last_memory_write_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Last Memory Write Ids",
+      "type": "array"
+    },
+    "last_turn_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Last Turn At"
+    },
+    "open_questions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Open Questions",
+      "type": "array"
+    },
+    "recent_lessons": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Recent Lessons",
+      "type": "array"
+    }
+  },
+  "title": "SelfState",
+  "type": "object"
+}

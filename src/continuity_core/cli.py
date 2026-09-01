@@ -11,7 +11,7 @@ from .ingest import load_many
 
 def _write_json(path: Path, data: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def build_command(args: argparse.Namespace) -> int:
@@ -29,8 +29,9 @@ def build_command(args: argparse.Namespace) -> int:
 
 def compile_command(args: argparse.Namespace) -> int:
     data = json.loads(Path(args.bundle).read_text(encoding="utf-8"))
-    profile = compile_profile(bundle_from_dict(data), target=args.target)
-    Path(args.output).write_text(profile, encoding="utf-8")
+    Path(args.output).write_text(
+        compile_profile(bundle_from_dict(data), target=args.target), encoding="utf-8"
+    )
     print(f"Wrote {args.output}")
     return 0
 
@@ -47,24 +48,23 @@ def drift_command(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="continuity", description="Build portable AI identity continuity bundles")
+    parser = argparse.ArgumentParser(prog="continuity", description="Build portable AI continuity bundles")
     sub = parser.add_subparsers(dest="command", required=True)
-
-    build = sub.add_parser("build", help="Extract an evidence-backed identity bundle from transcript files")
-    build.add_argument("inputs", nargs="+", help="JSON, TXT or Markdown transcript files")
-    build.add_argument("--subject", required=True, help="Name of the AI/persona whose continuity is being compiled")
+    build = sub.add_parser("build", help="extract an evidence-backed bundle from transcripts")
+    build.add_argument("inputs", nargs="+")
+    build.add_argument("--subject", required=True)
     build.add_argument("--output", default="identity.bundle.json")
     build.add_argument("--voice-role", choices=["assistant", "user"], default="assistant")
     build.add_argument("--max-per-kind", type=int, default=20)
     build.set_defaults(func=build_command)
-
-    compile_p = sub.add_parser("compile", help="Compile a bundle into a target-specific continuity prompt")
-    compile_p.add_argument("bundle")
-    compile_p.add_argument("--target", choices=["generic", "openai", "anthropic", "gemini"], default="generic")
-    compile_p.add_argument("--output", default="continuity-profile.txt")
-    compile_p.set_defaults(func=compile_command)
-
-    drift = sub.add_parser("drift", help="Evaluate a candidate response against the bundle")
+    compile_parser = sub.add_parser("compile", help="compile a target-specific continuity prompt")
+    compile_parser.add_argument("bundle")
+    compile_parser.add_argument(
+        "--target", choices=["generic", "openai", "anthropic", "gemini"], default="generic"
+    )
+    compile_parser.add_argument("--output", default="continuity-profile.txt")
+    compile_parser.set_defaults(func=compile_command)
+    drift = sub.add_parser("drift", help="evaluate a response against a bundle")
     drift.add_argument("bundle")
     drift.add_argument("response")
     drift.add_argument("--output")
@@ -73,8 +73,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> int:
-    parser = build_parser()
-    args = parser.parse_args()
+    args = build_parser().parse_args()
     return int(args.func(args))
 
 

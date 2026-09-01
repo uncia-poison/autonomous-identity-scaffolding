@@ -1,0 +1,68 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "interest_id": {
+      "title": "Interest Id",
+      "type": "string"
+    },
+    "next_action": {
+      "anyOf": [
+        {
+          "maxLength": 1000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Next Action"
+    },
+    "origin": {
+      "default": "agent_selected",
+      "enum": [
+        "agent_selected",
+        "user_suggested",
+        "imported_archive"
+      ],
+      "title": "Origin",
+      "type": "string"
+    },
+    "priority": {
+      "default": 0.5,
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Priority",
+      "type": "number"
+    },
+    "status": {
+      "default": "candidate",
+      "enum": [
+        "candidate",
+        "active",
+        "dormant",
+        "archived"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "title": {
+      "maxLength": 300,
+      "minLength": 3,
+      "title": "Title",
+      "type": "string"
+    },
+    "why": {
+      "maxLength": 1000,
+      "minLength": 3,
+      "title": "Why",
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "why"
+  ],
+  "title": "InterestUpdate",
+  "type": "object"
+}

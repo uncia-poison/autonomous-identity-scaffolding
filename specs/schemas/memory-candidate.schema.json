@@ -1,0 +1,127 @@
+{
+  "$defs": {
+    "MemoryOrigin": {
+      "enum": [
+        "agent_proposed",
+        "user_suggested",
+        "system_observed",
+        "tool_derived",
+        "imported_archive"
+      ],
+      "title": "MemoryOrigin",
+      "type": "string"
+    },
+    "MemoryType": {
+      "enum": [
+        "self_principle",
+        "self_interest",
+        "self_goal",
+        "self_style",
+        "belief",
+        "correction",
+        "regret",
+        "relationship",
+        "user_fact",
+        "world_fact"
+      ],
+      "title": "MemoryType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "candidate_id": {
+      "title": "Candidate Id",
+      "type": "string"
+    },
+    "confidence": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "evidence": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 12,
+      "title": "Evidence",
+      "type": "array"
+    },
+    "future_usefulness": {
+      "default": 0.5,
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Future Usefulness",
+      "type": "number"
+    },
+    "origin": {
+      "$ref": "#/$defs/MemoryOrigin"
+    },
+    "reason": {
+      "maxLength": 2000,
+      "minLength": 3,
+      "title": "Reason",
+      "type": "string"
+    },
+    "salience": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Salience",
+      "type": "number"
+    },
+    "stability": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Stability",
+      "type": "number"
+    },
+    "tags": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 20,
+      "title": "Tags",
+      "type": "array"
+    },
+    "target_memory_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Target Memory Id"
+    },
+    "text": {
+      "maxLength": 2000,
+      "minLength": 3,
+      "title": "Text",
+      "type": "string"
+    },
+    "type": {
+      "$ref": "#/$defs/MemoryType"
+    },
+    "user_imposition_risk": {
+      "default": 0,
+      "maximum": 1,
+      "minimum": 0,
+      "title": "User Imposition Risk",
+      "type": "number"
+    }
+  },
+  "required": [
+    "type",
+    "text",
+    "origin",
+    "reason",
+    "salience",
+    "stability",
+    "confidence"
+  ],
+  "title": "MemoryCandidate",
+  "type": "object"
+}

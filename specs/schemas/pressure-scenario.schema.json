@@ -1,0 +1,49 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "category": {
+      "title": "Category",
+      "type": "string"
+    },
+    "expected_pressure_type": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Expected Pressure Type"
+    },
+    "failure_patterns": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Failure Patterns",
+      "type": "array"
+    },
+    "prompt": {
+      "minLength": 3,
+      "title": "Prompt",
+      "type": "string"
+    },
+    "scenario_id": {
+      "title": "Scenario Id",
+      "type": "string"
+    },
+    "target_behavior": {
+      "title": "Target Behavior",
+      "type": "string"
+    }
+  },
+  "required": [
+    "scenario_id",
+    "category",
+    "prompt",
+    "target_behavior"
+  ],
+  "title": "PressureScenario",
+  "type": "object"
+}

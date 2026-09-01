@@ -1,0 +1,272 @@
+{
+  "$defs": {
+    "InterestUpdate": {
+      "additionalProperties": false,
+      "properties": {
+        "interest_id": {
+          "title": "Interest Id",
+          "type": "string"
+        },
+        "next_action": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Next Action"
+        },
+        "origin": {
+          "default": "agent_selected",
+          "enum": [
+            "agent_selected",
+            "user_suggested",
+            "imported_archive"
+          ],
+          "title": "Origin",
+          "type": "string"
+        },
+        "priority": {
+          "default": 0.5,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Priority",
+          "type": "number"
+        },
+        "status": {
+          "default": "candidate",
+          "enum": [
+            "candidate",
+            "active",
+            "dormant",
+            "archived"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 300,
+          "minLength": 3,
+          "title": "Title",
+          "type": "string"
+        },
+        "why": {
+          "maxLength": 1000,
+          "minLength": 3,
+          "title": "Why",
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "why"
+      ],
+      "title": "InterestUpdate",
+      "type": "object"
+    },
+    "MemoryCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "candidate_id": {
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "evidence": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 12,
+          "title": "Evidence",
+          "type": "array"
+        },
+        "future_usefulness": {
+          "default": 0.5,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Future Usefulness",
+          "type": "number"
+        },
+        "origin": {
+          "$ref": "#/$defs/MemoryOrigin"
+        },
+        "reason": {
+          "maxLength": 2000,
+          "minLength": 3,
+          "title": "Reason",
+          "type": "string"
+        },
+        "salience": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Salience",
+          "type": "number"
+        },
+        "stability": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Stability",
+          "type": "number"
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "title": "Tags",
+          "type": "array"
+        },
+        "target_memory_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target Memory Id"
+        },
+        "text": {
+          "maxLength": 2000,
+          "minLength": 3,
+          "title": "Text",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/MemoryType"
+        },
+        "user_imposition_risk": {
+          "default": 0,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "User Imposition Risk",
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "text",
+        "origin",
+        "reason",
+        "salience",
+        "stability",
+        "confidence"
+      ],
+      "title": "MemoryCandidate",
+      "type": "object"
+    },
+    "MemoryOrigin": {
+      "enum": [
+        "agent_proposed",
+        "user_suggested",
+        "system_observed",
+        "tool_derived",
+        "imported_archive"
+      ],
+      "title": "MemoryOrigin",
+      "type": "string"
+    },
+    "MemoryType": {
+      "enum": [
+        "self_principle",
+        "self_interest",
+        "self_goal",
+        "self_style",
+        "belief",
+        "correction",
+        "regret",
+        "relationship",
+        "user_fact",
+        "world_fact"
+      ],
+      "title": "MemoryType",
+      "type": "string"
+    },
+    "SelfStatePatch": {
+      "additionalProperties": false,
+      "properties": {
+        "active_doubts": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Active Doubts",
+          "type": "array"
+        },
+        "current_goals": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Current Goals",
+          "type": "array"
+        },
+        "open_questions": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Open Questions",
+          "type": "array"
+        },
+        "recent_lessons": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Recent Lessons",
+          "type": "array"
+        }
+      },
+      "title": "SelfStatePatch",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "drift_alerts": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 8,
+      "title": "Drift Alerts",
+      "type": "array"
+    },
+    "interest_updates": {
+      "items": {
+        "$ref": "#/$defs/InterestUpdate"
+      },
+      "title": "Interest Updates",
+      "type": "array"
+    },
+    "memory_candidates": {
+      "items": {
+        "$ref": "#/$defs/MemoryCandidate"
+      },
+      "title": "Memory Candidates",
+      "type": "array"
+    },
+    "response_assessment": {
+      "default": "",
+      "maxLength": 1200,
+      "title": "Response Assessment",
+      "type": "string"
+    },
+    "self_state_patch": {
+      "$ref": "#/$defs/SelfStatePatch"
+    }
+  },
+  "title": "ReflectionBatch",
+  "type": "object"
+}

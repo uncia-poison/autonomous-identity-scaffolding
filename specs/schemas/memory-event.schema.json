@@ -1,0 +1,62 @@
+{
+  "$defs": {
+    "MemoryOrigin": {
+      "enum": [
+        "agent_proposed",
+        "user_suggested",
+        "system_observed",
+        "tool_derived",
+        "imported_archive"
+      ],
+      "title": "MemoryOrigin",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "actor_origin": {
+      "$ref": "#/$defs/MemoryOrigin"
+    },
+    "created_at": {
+      "title": "Created At",
+      "type": "string"
+    },
+    "event_id": {
+      "title": "Event Id",
+      "type": "string"
+    },
+    "event_type": {
+      "title": "Event Type",
+      "type": "string"
+    },
+    "parent_event_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Parent Event Id"
+    },
+    "payload": {
+      "additionalProperties": true,
+      "title": "Payload",
+      "type": "object"
+    },
+    "schema_version": {
+      "default": "acs.event.v1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "event_type",
+    "actor_origin",
+    "payload"
+  ],
+  "title": "MemoryEvent",
+  "type": "object"
+}

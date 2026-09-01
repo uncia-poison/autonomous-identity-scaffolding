@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use ACS in research, cite this repository."
+title: "Autonomous Character Scaffolding"
+type: software
+version: 0.3.0
+date-released: 2026-09-01
+authors:
+  - family-names: Pochinova
+    given-names: Alina
+  - name: KAi
+repository-code: "https://github.com/uncia-poison/autonomous-character-scaffolding"
+license: LicenseRef-Proprietary
+

@@ -1,0 +1,15 @@
+{
+  "api_base_url": null,
+  "model": "gpt-5-mini",
+  "ollama_url": "http://127.0.0.1:11434",
+  "recall_limit": 8,
+  "runtime_variant": "api",
+  "schema_version": "acs.workspace.v1",
+  "storage": {
+    "backend": "filesystem",
+    "bucket": null,
+    "endpoint_url": null,
+    "path": "/mnt/gdrive/ACS/neutral-agent-api-memory",
+    "prefix": "acs"
+  }
+}

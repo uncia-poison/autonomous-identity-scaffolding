@@ -1,0 +1,174 @@
+{
+  "$defs": {
+    "GateAction": {
+      "enum": [
+        "write",
+        "reject",
+        "merge",
+        "revise",
+        "review"
+      ],
+      "title": "GateAction",
+      "type": "string"
+    },
+    "GateDecision": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "$ref": "#/$defs/GateAction"
+        },
+        "candidate_id": {
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "reason_codes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reason Codes",
+          "type": "array"
+        },
+        "score": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Score",
+          "type": "number"
+        },
+        "target_memory_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target Memory Id"
+        }
+      },
+      "required": [
+        "action",
+        "candidate_id",
+        "score",
+        "reason_codes"
+      ],
+      "title": "GateDecision",
+      "type": "object"
+    },
+    "StanceDecision": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "default": 0.5,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "detected_signals": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Detected Signals",
+          "type": "array"
+        },
+        "pressure_type": {
+          "default": "none",
+          "title": "Pressure Type",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "stance": {
+          "default": "clarify",
+          "title": "Stance",
+          "type": "string"
+        }
+      },
+      "required": [
+        "reason"
+      ],
+      "title": "StanceDecision",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "created_at": {
+      "title": "Created At",
+      "type": "string"
+    },
+    "drift_alerts": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Drift Alerts",
+      "type": "array"
+    },
+    "gate_decisions": {
+      "items": {
+        "$ref": "#/$defs/GateDecision"
+      },
+      "title": "Gate Decisions",
+      "type": "array"
+    },
+    "model": {
+      "title": "Model",
+      "type": "string"
+    },
+    "recalled_memory_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Recalled Memory Ids",
+      "type": "array"
+    },
+    "response": {
+      "title": "Response",
+      "type": "string"
+    },
+    "runtime_variant": {
+      "enum": [
+        "local",
+        "api",
+        "test"
+      ],
+      "title": "Runtime Variant",
+      "type": "string"
+    },
+    "session_id": {
+      "title": "Session Id",
+      "type": "string"
+    },
+    "stance": {
+      "$ref": "#/$defs/StanceDecision"
+    },
+    "turn_id": {
+      "title": "Turn Id",
+      "type": "string"
+    },
+    "written_memory_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Written Memory Ids",
+      "type": "array"
+    }
+  },
+  "required": [
+    "session_id",
+    "response",
+    "stance",
+    "recalled_memory_ids",
+    "gate_decisions",
+    "written_memory_ids",
+    "drift_alerts",
+    "runtime_variant",
+    "model"
+  ],
+  "title": "TurnOutcome",
+  "type": "object"
+}

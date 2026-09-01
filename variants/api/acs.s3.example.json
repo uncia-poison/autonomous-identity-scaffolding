@@ -1,0 +1,15 @@
+{
+  "api_base_url": null,
+  "model": "gpt-5-mini",
+  "ollama_url": "http://127.0.0.1:11434",
+  "recall_limit": 8,
+  "runtime_variant": "api",
+  "schema_version": "acs.workspace.v1",
+  "storage": {
+    "backend": "s3",
+    "bucket": "my-private-acs-bucket",
+    "endpoint_url": null,
+    "path": null,
+    "prefix": "characters/neutral-agent"
+  }
+}

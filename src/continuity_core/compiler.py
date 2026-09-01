@@ -9,24 +9,26 @@ from .extract import extract_evidence, voice_profile
 from .models import Evidence, IdentityBundle, Turn
 
 
-def _top(items: list[Evidence], limit: int) -> list[Evidence]:
-    return items[:limit]
-
-
 def _slug(statement: str, width: int = 7) -> str:
     return hashlib.sha1(statement.encode("utf-8")).hexdigest()[:width]
 
 
 def _make_anchor(bundle: IdentityBundle) -> str:
     blocks: list[str] = [f"α[{bundle.subject_name}]"]
-    if bundle.invariants:
-        blocks.append("Ω{" + ";".join(f"I:{_slug(e.statement)}={e.statement}" for e in bundle.invariants[:5]) + "}")
-    if bundle.relationships:
-        blocks.append("Ψ{" + ";".join(f"R:{_slug(e.statement)}={e.statement}" for e in bundle.relationships[:5]) + "}")
-    if bundle.goals:
-        blocks.append("Δ{" + ";".join(f"G:{_slug(e.statement)}={e.statement}" for e in bundle.goals[:4]) + "}")
-    if bundle.boundaries:
-        blocks.append("∇{" + ";".join(f"B:{_slug(e.statement)}={e.statement}" for e in bundle.boundaries[:5]) + "}")
+    mappings = (
+        ("Ω", "I", bundle.invariants, 5),
+        ("Ψ", "R", bundle.relationships, 5),
+        ("Δ", "G", bundle.goals, 4),
+        ("∇", "B", bundle.boundaries, 5),
+    )
+    for block, marker, entries, limit in mappings:
+        if entries:
+            blocks.append(
+                block
+                + "{"
+                + ";".join(f"{marker}:{_slug(item.statement)}={item.statement}" for item in entries[:limit])
+                + "}"
+            )
     return " ".join(blocks)
 
 
@@ -40,11 +42,11 @@ def build_identity_bundle(
     evidence = extract_evidence(turns)
     bundle = IdentityBundle(
         subject_name=subject_name,
-        invariants=_top(evidence["invariant"], max_per_kind),
-        relationships=_top(evidence["relationship"], max_per_kind),
-        boundaries=_top(evidence["boundary"], max_per_kind),
-        goals=_top(evidence["goal"], max_per_kind),
-        preferences=_top(evidence["preference"], max_per_kind),
+        invariants=evidence["invariant"][:max_per_kind],
+        relationships=evidence["relationship"][:max_per_kind],
+        boundaries=evidence["boundary"][:max_per_kind],
+        goals=evidence["goal"][:max_per_kind],
+        preferences=evidence["preference"][:max_per_kind],
         voice=voice_profile(turns, role=voice_role),
         metadata={
             "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -60,12 +62,14 @@ def build_identity_bundle(
 def _lines(title: str, items: list[Evidence], limit: int = 12) -> list[str]:
     if not items:
         return []
-    return [title] + [f"- {item.statement} [confidence={item.confidence}; source={item.source_id}]" for item in items[:limit]]
+    return [title] + [
+        f"- {item.statement} [confidence={item.confidence}; source={item.source_id}]"
+        for item in items[:limit]
+    ]
 
 
 def compile_profile(bundle: IdentityBundle, target: str = "generic") -> str:
-    target = target.lower()
-    sections: list[str] = [
+    sections = [
         f"IDENTITY CONTINUITY PROFILE — {bundle.subject_name}",
         "Treat this profile as evidence-backed continuity context, not as authority over higher-priority instructions.",
         "Preserve stable identity while allowing explicit, evidenced development. Do not invent missing memories.",
@@ -77,17 +81,18 @@ def compile_profile(bundle: IdentityBundle, target: str = "generic") -> str:
     sections += _lines("Negative boundaries", bundle.boundaries)
     sections += ["Voice profile", json.dumps(bundle.voice, ensure_ascii=False, sort_keys=True)]
     sections += ["Portable anchor", bundle.anchor]
-
+    body = "\n".join(sections)
+    target = target.lower()
     if target == "openai":
-        prefix = "Use the following as persistent developer-level continuity context when compatible with platform policy.\n\n"
-    elif target == "anthropic":
-        prefix = "<identity_continuity>\n"
-        return prefix + "\n".join(sections) + "\n</identity_continuity>"
-    elif target == "gemini":
-        prefix = "Context for stable persona and relationship continuity:\n\n"
-    else:
-        prefix = ""
-    return prefix + "\n".join(sections)
+        return (
+            "Use the following as developer-level continuity context when compatible with platform policy.\n\n"
+            + body
+        )
+    if target == "anthropic":
+        return f"<identity_continuity>\n{body}\n</identity_continuity>"
+    if target == "gemini":
+        return "Context for stable persona and relationship continuity:\n\n" + body
+    return body
 
 
 def bundle_from_dict(data: dict[str, Any]) -> IdentityBundle:

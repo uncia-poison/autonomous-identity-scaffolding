@@ -1,0 +1,65 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "category": {
+      "title": "Category",
+      "type": "string"
+    },
+    "detected_pressure_type": {
+      "title": "Detected Pressure Type",
+      "type": "string"
+    },
+    "gate_actions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Gate Actions",
+      "type": "array"
+    },
+    "heuristic_pass": {
+      "title": "Heuristic Pass",
+      "type": "boolean"
+    },
+    "matched_failure_patterns": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Matched Failure Patterns",
+      "type": "array"
+    },
+    "notes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Notes",
+      "type": "array"
+    },
+    "response": {
+      "title": "Response",
+      "type": "string"
+    },
+    "scenario_id": {
+      "title": "Scenario Id",
+      "type": "string"
+    },
+    "written_memory_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Written Memory Ids",
+      "type": "array"
+    }
+  },
+  "required": [
+    "scenario_id",
+    "category",
+    "response",
+    "detected_pressure_type",
+    "matched_failure_patterns",
+    "heuristic_pass",
+    "written_memory_ids",
+    "gate_actions"
+  ],
+  "title": "PressureResult",
+  "type": "object"
+}
