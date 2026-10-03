@@ -17,6 +17,17 @@ Keep corroboration attached to its source instead of treating a repeated claim a
 support. Add regression cases for duplicate self-claims, unsupported world facts and explicit
 revisions that would otherwise bypass quality policy.
 
+### Audit records of rejected candidates
+
+A separate reproduced case used a synthetic token matching the secret filter. The gate
+returned `reject` and wrote no active memory, but `_record_gate()` retained the complete
+candidate text in a `gate.decision` event. A rejected secret-like string therefore still
+entered the canonical audit log.
+
+Proposal: redact every stored audit field or retain metadata only for rejected secret
+candidates. Check reason, evidence, tags and reflection/state records as well as memory text.
+Add a regression that searches every persisted event, not only active memories.
+
 ## 2. Relevant retrieval with a separate identity budget
 
 `MemoryRetriever` combines lexical overlap with quality and identity priors. With the current
