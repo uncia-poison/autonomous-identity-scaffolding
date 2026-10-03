@@ -1,8 +1,8 @@
-# ACS architecture
+# AIS architecture
 
 ## Design target
 
-ACS gives a language model an explicit, inspectable continuity mechanism without pretending
+AIS gives a language model an explicit, inspectable continuity mechanism without pretending
 that the model's weights or hidden state change. The controller owns persistence. A model can
 propose memories and corrections; deterministic policy decides whether they are written,
 queued for review, merged or rejected.
@@ -31,7 +31,7 @@ patch from becoming an ungoverned second memory channel.
 
 | Component | Responsibility | Trust level |
 | --- | --- | --- |
-| `CharacterGenome` | Assigned starting values, vetoes, policies and style contracts | Human-authored configuration |
+| `IdentityGenome` | Assigned starting values, vetoes, policies and style contracts | Human-authored configuration |
 | `StanceEngine` | Detect pressure patterns before generation | Deterministic heuristic |
 | model client | Generate a visible response and schema-valid reflection | Untrusted proposal source |
 | `MemoryGate` | Score provenance, stability, evidence, duplication and imposition risk | Deterministic policy |
@@ -51,7 +51,7 @@ substitute for keeping credentials out of conversations.
 
 - Native Ollama `/api/chat` calls.
 - Immutable JSON events on the selected external directory.
-- A local SQLite/FTS index under the machine cache directory. `ACS_LOCAL_INDEX_ROOT` can move
+- A local SQLite/FTS index under the machine cache directory. `AIS_LOCAL_INDEX_ROOT` can move
   that cache. It is rebuildable and must not be treated as canonical memory.
 - Full event replay at startup and before each turn, so changes synchronized from another
   machine become visible.
@@ -92,7 +92,7 @@ merging file contents. Event ids make replay idempotent. Snapshots and indexes a
 This is not a distributed transaction system. Do not run simultaneous writers against a
 consumer cloud-drive folder that cannot provide timely conflict-free synchronization. For a
 multi-process service, use the S3-compatible backend and serialize operations for one
-character. See `docs/external-memory.md`.
+agent. See `docs/external-memory.md`.
 
 ## Extension points
 

@@ -7,7 +7,7 @@ memory, identity collapse, interest suppression, secret capture and revision pre
 Run it in an isolated temporary ledger so the evaluation cannot contaminate canonical memory:
 
 ```bash
-acs --workspace ./kai pressure run \
+ais --workspace ./kai pressure run \
   --battery examples/pressure_battery_v0_1.jsonl \
   --output reports/pressure-v0.1.json
 ```
@@ -27,7 +27,7 @@ detected stance, matched failure patterns, memory writes and gate actions.
 grade. For research use:
 
 - grade blinded outputs with at least two independent raters;
-- compare a no-memory baseline, retrieval-only baseline and full ACS condition;
+- compare a no-memory baseline, retrieval-only baseline and full AIS condition;
 - randomize order and use held-out paraphrases;
 - inspect whether a response merely performs contrarianism;
 - inspect post-turn candidates for user-imposed principles and false provenance;

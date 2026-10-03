@@ -8,13 +8,13 @@ inside the prompt, and higher-priority provider rules remain authoritative.
 
 ## Data protection
 
-The event log stores redacted user and assistant turn text so the character can inspect prior
+The event log stores redacted user and assistant turn text so the agent can inspect prior
 outputs. The built-in redactor catches several common token/key formats, but it cannot
 recognize every secret or personal datum. Do not paste credentials. Use encrypted private
 storage, access controls, retention rules and backups appropriate to the conversation.
 
 Environment variables and standard provider credential chains are used for API and S3
-secrets. `.env` and local SQLite files are ignored by Git. Never commit a live character
+secrets. `.env` and local SQLite files are ignored by Git. Never commit a live agent
 workspace.
 
 ## Prompt injection and memory poisoning
@@ -37,7 +37,7 @@ as an incident.
 
 ## Non-claims
 
-ACS does not recover hidden sessions, grant the model undisclosed background execution, alter
+AIS does not recover hidden sessions, grant the model undisclosed background execution, alter
 weights, prove consciousness, or establish metaphysical personal identity. Continuity exists
 only when the controller explicitly reloads external state and supplies selected evidence.
 

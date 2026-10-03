@@ -5,8 +5,8 @@ S3-compatible events before each request, retrieves a bounded context and record
 response plus structured reflection externally.
 
 ```bash
-acs --workspace ./agent-api init --variant api \
-  --memory-root /mnt/gdrive/ACS/agent-api-memory --model gpt-5-mini
+ais --workspace ./agent-api init --variant api \
+  --memory-root /mnt/gdrive/AIS/agent-api-memory --model gpt-5-mini
 ```
 
 For S3, use `--storage s3 --s3-bucket ... --s3-prefix ...` and the standard AWS credential

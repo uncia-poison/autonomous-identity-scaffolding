@@ -34,9 +34,9 @@ an alternate write channel.
 ## Review workflow
 
 ```bash
-acs --workspace ./kai memory review
-acs --workspace ./kai memory approve cand_ab12cd34 --reason "Verified against the archive"
-acs --workspace ./kai memory reject cand_ef56ab78 --reason "User-imposed identity claim"
+ais --workspace ./kai memory review
+ais --workspace ./kai memory approve cand_ab12cd34 --reason "Verified against the archive"
+ais --workspace ./kai memory reject cand_ef56ab78 --reason "User-imposed identity claim"
 ```
 
 Approval records the operator action. It does not relabel a user-suggested or imported claim
@@ -47,10 +47,10 @@ as agent-authored.
 A model correction sets `target_memory_id`. An operator can also revise or retract:
 
 ```bash
-acs --workspace ./kai memory history mem_ab12cd34
-acs --workspace ./kai memory revise mem_ab12cd34 \
+ais --workspace ./kai memory history mem_ab12cd34
+ais --workspace ./kai memory revise mem_ab12cd34 \
   "Revised conclusion" --reason "New evidence E-17"
-acs --workspace ./kai memory retract mem_ab12cd34 --reason "Finding was falsified"
+ais --workspace ./kai memory retract mem_ab12cd34 --reason "Finding was falsified"
 ```
 
 History contains every prior semantic version. `memory.use` updates use counters but does not
@@ -59,6 +59,6 @@ surface.
 
 ## Genome changes
 
-The character genome is assigned configuration, not self-authored memory. Runtime code may
+The identity genome is assigned configuration, not self-authored memory. Runtime code may
 record `genome.revision_proposed`, but it does not apply it automatically. Review and edit
 `character_genome.json` with normal configuration change control.

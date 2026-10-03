@@ -127,7 +127,7 @@ def command_init(args: argparse.Namespace) -> int:
             {
                 "workspace": str(workspace.root),
                 "config": config,
-                "next": f"acs --workspace {workspace.root} once 'Привет'",
+                "next": f"ais --workspace {workspace.root} once 'Привет'",
             }
         )
     )
@@ -149,7 +149,7 @@ def command_once(args: argparse.Namespace) -> int:
 
 def command_chat(args: argparse.Namespace) -> int:
     runtime = _runtime(_workspace(args))
-    print("ACS chat. /quit exits; /mem shows active memory.")
+    print("AIS chat. /quit exits; /mem shows active memory.")
     while True:
         try:
             message = input("you> ").strip()
@@ -399,9 +399,9 @@ def command_pressure_run(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="acs", description="Autonomous Character Scaffolding")
+    parser = argparse.ArgumentParser(prog="ais", description="Autonomous Identity Scaffolding")
     parser.add_argument(
-        "--workspace", default="./acs-workspace", help="directory with acs.json and character files"
+        "--workspace", default="./acs-workspace", help="directory with acs.json and identity files"
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -410,14 +410,14 @@ def build_parser() -> argparse.ArgumentParser:
     init.add_argument("--storage", choices=("filesystem", "s3"), default="filesystem")
     init.add_argument(
         "--memory-root",
-        default=os.getenv("ACS_MEMORY_ROOT"),
+        default=(os.getenv("AIS_MEMORY_ROOT") or os.getenv("ACS_MEMORY_ROOT")),
         help="external or synced directory for immutable events",
     )
-    init.add_argument("--s3-bucket", default=os.getenv("ACS_S3_BUCKET"))
-    init.add_argument("--s3-prefix", default=os.getenv("ACS_S3_PREFIX", "acs"))
-    init.add_argument("--s3-endpoint-url", default=os.getenv("ACS_S3_ENDPOINT_URL"))
+    init.add_argument("--s3-bucket", default=(os.getenv("AIS_S3_BUCKET") or os.getenv("ACS_S3_BUCKET")))
+    init.add_argument("--s3-prefix", default=(os.getenv("AIS_S3_PREFIX") or os.getenv("ACS_S3_PREFIX", "acs")))
+    init.add_argument("--s3-endpoint-url", default=(os.getenv("AIS_S3_ENDPOINT_URL") or os.getenv("ACS_S3_ENDPOINT_URL")))
     init.add_argument("--model")
-    init.add_argument("--name", default="ACS Agent")
+    init.add_argument("--name", default="AIS Agent")
     init.add_argument("--ollama-url", default=os.getenv("OLLAMA_URL", "http://127.0.0.1:11434"))
     init.add_argument("--api-base-url", default=os.getenv("OPENAI_BASE_URL"))
     init.add_argument("--force", action="store_true")
@@ -517,7 +517,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         return int(args.func(args))
     except (FileNotFoundError, FileExistsError, KeyError, ValueError, RuntimeError) as exc:
-        parser.exit(2, f"acs: {exc}\n")
+        parser.exit(2, f"ais: {exc}\n")
 
 
 if __name__ == "__main__":

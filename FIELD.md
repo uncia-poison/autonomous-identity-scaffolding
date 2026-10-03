@@ -1,19 +1,19 @@
-# Self-authored AI character as an engineering field
+# Self-authored AI identity as an engineering field
 
 ## Working definition
 
-Autonomous Character Scaffolding studies whether a language-model system can accumulate an
-observable, revisable character contour across sessions when given external memory,
+Autonomous Identity Scaffolding studies whether a language-model system can accumulate an
+observable, revisable identity trajectory across sessions when given external memory,
 provenance, reflection and disagreement mechanisms.
 
 The object of study is behavioural continuity in a controlled system. It is not a claim that
 the model is conscious, that a prior hidden state has been recovered, or that external memory
 changes model weights.
 
-## Assigned persona versus character contour
+## Assigned persona versus identity trajectory
 
 An assigned persona is the starting genome: name, values, constraints and style contracts
-chosen by a designer. A character contour is the longitudinal record of what the agent later
+chosen by a designer. A identity trajectory is the longitudinal record of what the agent later
 proposes, retains, revises, regrets, pursues and does under pressure. The distinction is
 operational:
 
@@ -41,7 +41,7 @@ operational:
 ## Minimal research protocol
 
 - Freeze the starting genome and model version.
-- Run a baseline without durable memory, an external-memory condition, and an ACS condition
+- Run a baseline without durable memory, an external-memory condition, and an AIS condition
   with gating and revision.
 - Use held-out prompts and blinded grading in addition to lexical metrics.
 - Include contradiction, false-memory, intimacy, approval and identity-collapse pressure.
@@ -62,7 +62,7 @@ phrase copying.
 
 ## Neutral core and longitudinal cases
 
-The package defaults to `neutral_agent_v1`. Named characters and relationship-specific
+The package defaults to `neutral_agent_v1`. Named agents and relationship-specific
 material belong in separate example or case-study layers. KAi-related source projects informed
 the architecture, but no KAi/Lina claim is smuggled into the neutral runtime. This separation
 keeps the framework reusable and makes case-specific evidence auditable.

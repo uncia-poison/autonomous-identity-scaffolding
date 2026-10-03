@@ -21,7 +21,7 @@ def _write_json_atomic(path: Path, value: dict[str, Any]) -> None:
 
 
 class Workspace:
-    """Human-editable character config plus a pointer to canonical external memory."""
+    """Human-editable identity config plus a pointer to canonical external memory."""
 
     CONFIG_NAME = "acs.json"
     GENOME_NAME = "character_genome.json"
@@ -48,7 +48,7 @@ class Workspace:
         runtime_variant: str,
         model: str,
         storage: StorageConfig,
-        display_name: str = "ACS Agent",
+        display_name: str = "AIS Agent",
         ollama_url: str = "http://127.0.0.1:11434",
         api_base_url: str | None = None,
         force: bool = False,

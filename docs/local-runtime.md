@@ -15,13 +15,13 @@ Create configuration locally and point canonical memory at an external or synchr
 directory:
 
 ```bash
-acs --workspace ./kai-local init \
+ais --workspace ./kai-local init \
   --variant local \
   --model qwen3:8b \
   --name KAi \
-  --memory-root /mnt/gdrive/ACS/kai-memory
+  --memory-root /mnt/gdrive/AIS/kai-memory
 
-acs --workspace ./kai-local chat
+ais --workspace ./kai-local chat
 ```
 
 For another Ollama host add `--ollama-url http://host:11434` during initialization. The URL is
@@ -37,17 +37,17 @@ the server root, not `/api/chat`.
 6. The deterministic gate accepts, merges, rejects or queues each proposal.
 7. Turn, state and use events are appended; a disposable snapshot is refreshed.
 
-The SQLite file is stored under `$ACS_LOCAL_INDEX_ROOT` or the platform cache directory. Delete
+The SQLite file is stored under `$AIS_LOCAL_INDEX_ROOT` or the platform cache directory. Delete
 it at any time; the next start rebuilds it from JSON events.
 
 ## Inspecting memory
 
 ```bash
-acs --workspace ./kai-local inspect
-acs --workspace ./kai-local memory list --all
-acs --workspace ./kai-local memory search "согласие под давлением"
-acs --workspace ./kai-local memory review
-acs --workspace ./kai-local export --output exports/state.json
+ais --workspace ./kai-local inspect
+ais --workspace ./kai-local memory list --all
+ais --workspace ./kai-local memory search "согласие под давлением"
+ais --workspace ./kai-local memory review
+ais --workspace ./kai-local export --output exports/state.json
 ```
 
 Use `memory approve` only after inspecting the candidate and its provenance. Local execution

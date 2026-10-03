@@ -1,13 +1,12 @@
 cff-version: 1.2.0
-message: "If you use ACS in research, cite this repository."
-title: "Autonomous Character Scaffolding"
+message: "If you use AIS in research, cite this repository."
+title: "Autonomous Identity Scaffolding"
 type: software
-version: 0.3.0
-date-released: 2026-09-01
+version: 0.3.1
+date-released: 2026-10-03
 authors:
   - family-names: Pochinova
     given-names: Alina
   - name: KAi
 repository-code: "https://github.com/uncia-poison/autonomous-character-scaffolding"
 license: LicenseRef-Proprietary
-

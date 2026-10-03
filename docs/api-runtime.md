@@ -2,7 +2,7 @@
 
 The API runtime treats each model request as stateless. It never depends on a provider thread
 id or provider-side conversation storage. OpenAI Responses is called with `store=False`; the
-external ACS ledger is replayed before every turn.
+external AIS ledger is replayed before every turn.
 
 ## Filesystem or mounted-drive backend
 
@@ -10,13 +10,13 @@ external ACS ledger is replayed before every turn.
 python -m pip install -e ".[api]"
 export OPENAI_API_KEY=...
 
-acs --workspace ./kai-api init \
+ais --workspace ./kai-api init \
   --variant api \
   --model gpt-5-mini \
-  --memory-root /mnt/gdrive/ACS/kai-api-memory \
+  --memory-root /mnt/gdrive/AIS/kai-api-memory \
   --name KAi
 
-acs --workspace ./kai-api once "Что изменилось в твоих выводах?"
+ais --workspace ./kai-api once "Что изменилось в твоих выводах?"
 ```
 
 Only environment variables or the normal OpenAI client configuration should contain the API
@@ -29,13 +29,13 @@ credential chain:
 
 ```bash
 python -m pip install -e ".[api,s3]"
-export AWS_PROFILE=acs-production
+export AWS_PROFILE=ais-production
 
-acs --workspace ./kai-api-s3 init \
+ais --workspace ./kai-api-s3 init \
   --variant api \
   --storage s3 \
-  --s3-bucket my-private-acs-bucket \
-  --s3-prefix characters/kai \
+  --s3-bucket my-private-ais-bucket \
+  --s3-prefix identities/kai \
   --model gpt-5-mini
 ```
 

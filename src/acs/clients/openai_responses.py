@@ -24,7 +24,7 @@ class OpenAIResponsesClient:
                 from openai import OpenAI
             except ImportError as exc:
                 raise RuntimeError(
-                    "Install the API extra: pip install 'autonomous-character-scaffolding[api]'"
+                    "Install the API extra: pip install 'autonomous-identity-scaffolding[api]'"
                 ) from exc
             kwargs: dict[str, Any] = {
                 "api_key": api_key or os.getenv("OPENAI_API_KEY"),

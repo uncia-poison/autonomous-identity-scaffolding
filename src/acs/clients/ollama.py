@@ -77,4 +77,4 @@ class OllamaClient:
         try:
             return ReflectionBatch.model_validate_json(content)
         except Exception as exc:
-            raise OllamaError(f"Ollama reflection did not match the ACS schema: {exc}") from exc
+            raise OllamaError(f"Ollama reflection did not match the AIS schema: {exc}") from exc

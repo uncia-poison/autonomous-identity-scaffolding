@@ -10,7 +10,7 @@ Keep configuration and canonical memory separate:
   character_genome.json
   self_state.json
 
-/mnt/gdrive/ACS/kai-memory/
+/mnt/gdrive/AIS/kai-memory/
   events/YYYY-MM-DD/evt_*.json
   snapshots/latest.json
 ```
@@ -20,13 +20,13 @@ and an index may be deleted; events are the source of truth.
 
 ## Google Drive, Dropbox, OneDrive and rclone
 
-ACS only needs a directory interface. Point `--memory-root` at a desktop-sync folder or an
+AIS only needs a directory interface. Point `--memory-root` at a desktop-sync folder or an
 `rclone mount` target. With rclone, create and test the remote first, use your own OAuth client
 where the provider recommends it, and enable encryption with `rclone crypt` when appropriate.
 
 Consumer sync clients are eventually consistent. Safe operating rules:
 
-- one active writer per character workspace;
+- one active writer per agent workspace;
 - let sync finish before moving the writer to another machine;
 - never edit event JSON in place;
 - resolve a duplicate/conflicted event by retaining both differently named valid events, then
@@ -34,7 +34,7 @@ Consumer sync clients are eventually consistent. Safe operating rules:
 - back up the complete `events/` directory before a migration.
 
 Multiple readers are fine. For simultaneous server writers, prefer the S3-compatible backend
-and serialize turns for one character at the application layer.
+and serialize turns for one agent at the application layer.
 
 ## S3 and compatible object stores
 
@@ -51,7 +51,7 @@ keys in `acs.json`.
 - Use provider versioning/backups and test restoration.
 - Use `memory retract` for semantic correction. If law or safety requires physical deletion,
   remove the affected objects and backups through an explicit, separately audited process;
-  ordinary ACS commands intentionally preserve lineage.
+  ordinary AIS commands intentionally preserve lineage.
 
 Recovery is deterministic: restore event files, point a new workspace at them, and run
-`acs ... inspect`. The current ledger and local index are rebuilt from the event stream.
+`ais ... inspect`. The current ledger and local index are rebuilt from the event stream.

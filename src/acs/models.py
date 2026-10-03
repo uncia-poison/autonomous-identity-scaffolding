@@ -176,7 +176,7 @@ class ReflectionBatch(StrictModel):
 class CharacterGenome(StrictModel):
     character_id: str = "neutral_agent_v1"
     version: str = "1.0"
-    display_name: str = "ACS Agent"
+    display_name: str = "AIS Agent"
     values: dict[str, float] = Field(
         default_factory=lambda: {
             "truth_over_approval": 0.95,

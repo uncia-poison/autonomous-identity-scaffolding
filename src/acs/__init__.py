@@ -1,4 +1,4 @@
-"""Autonomous Character Scaffolding public API."""
+"""Autonomous Identity Scaffolding public API."""
 
 from .ledger import MemoryLedger
 from .memory_gate import MemoryGate
@@ -24,12 +24,17 @@ from .models import (
 from .repository import EventSourcedMemoryRepository, LocalSQLiteMemoryRepository
 from .runtime.base import CharacterRuntime
 
+IdentityGenome = CharacterGenome
+IdentityRuntime = CharacterRuntime
+
 __all__ = [
     "CharacterGenome",
     "CharacterRuntime",
     "EventSourcedMemoryRepository",
     "GateAction",
     "GateDecision",
+    "IdentityGenome",
+    "IdentityRuntime",
     "InterestUpdate",
     "LocalSQLiteMemoryRepository",
     "MemoryCandidate",
@@ -48,4 +53,4 @@ __all__ = [
     "TurnOutcome",
     "WorkspaceConfig",
 ]
-__version__ = "0.3.0"
+__version__ = "0.3.1"

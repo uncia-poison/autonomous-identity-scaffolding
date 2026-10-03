@@ -27,7 +27,7 @@ from .text import tokens
 
 def default_local_index_path(memory_root: str | Path) -> Path:
     root = Path(memory_root).expanduser().resolve()
-    cache_root = os.getenv("ACS_LOCAL_INDEX_ROOT")
+    cache_root = os.getenv("AIS_LOCAL_INDEX_ROOT") or os.getenv("ACS_LOCAL_INDEX_ROOT")
     if cache_root:
         base = Path(cache_root).expanduser().resolve()
     else:

@@ -1,8 +1,8 @@
-# Autonomous Character Scaffolding
+# Autonomous Identity Scaffolding
 
-ACS is a runnable, model-independent framework for long-lived LLM agents that can propose,
+AIS is a runnable, model-independent framework for long-lived LLM agents that can propose,
 retrieve, revise, merge and retract their own external memories. It separates an assigned
-persona from an observable character contour: persistent principles, interests, stances,
+persona from an observable identity trajectory: persistent principles, interests, stances,
 revisions and responses under pressure.
 
 This repository does **not** claim consciousness, hidden-state recovery, weight updates or
@@ -36,7 +36,7 @@ agent's history.
   automatic opposition.
 - Post-response structured reflection with 0-3 memory candidates, interest updates,
   self-state patches and drift alerts.
-- A KAiScriptor-inspired portable character anchor (`α Ω Ψ Θ Δ Ξ ∇`) used as an export,
+- A KAiScriptor-inspired portable identity anchor (`α Ω Ψ Θ Δ Ξ ∇`) used as an export,
   never as a claim of hidden persistence.
 - Twenty pressure scenarios, metrics, export tools, schemas, a neutral example and a
   separated KAi longitudinal case layer.
@@ -50,16 +50,32 @@ source .venv/bin/activate              # Windows: .venv\\Scripts\\activate
 pip install -e ".[all]"
 ```
 
+## Naming and compatibility
+
+AIS is the new name of Autonomous Character Scaffolding. The project uses **identity** for
+continuity of an agent's own memories, principles, interests and revisions across time.
+
+Use the `ais` command and the `ais` Python API for new integrations:
+
+```python
+from ais import IdentityGenome, IdentityRuntime, MemoryCandidate, MemoryOrigin
+```
+
+The existing `acs` command, Python imports, `acs.json`, `character_genome.json`, `character_id`
+and `acs.*.v1` schema identifiers remain compatible. No event-log migration or memory-folder
+rename is required. `IdentityGenome` and `IdentityRuntime` are aliases of the existing types;
+this release changes names, not memory policy or agent state. See [Rename compatibility](docs/identity-rename.md).
+
 ## Put memory on an external drive
 
 Create the workspace **outside this repository**. It can be a normal disk, an encrypted
 volume, a Google Drive/Dropbox/OneDrive folder, or an `rclone mount` target.
 
 ```bash
-acs --workspace ./kai-local init \
+ais --workspace ./kai-local init \
   --variant local \
   --name KAi \
-  --memory-root /mnt/gdrive/ACS/kai-memory
+  --memory-root /mnt/gdrive/AIS/kai-memory
 ```
 
 The canonical record is a directory of immutable JSON events. SQLite is only a local-runtime
@@ -75,7 +91,7 @@ Start Ollama, choose any installed chat model, then:
 
 ```bash
 ollama pull qwen3:8b
-acs --workspace ./kai-local chat
+ais --workspace ./kai-local chat
 ```
 
 The native Ollama endpoint is used for both conversation and schema-constrained reflection.
@@ -87,12 +103,12 @@ overwrites.
 
 ```bash
 export OPENAI_API_KEY=...
-acs --workspace ./kai-api init \
+ais --workspace ./kai-api init \
   --variant api \
   --model gpt-5-mini \
   --name KAi \
-  --memory-root /mnt/gdrive/ACS/kai-api-memory
-acs --workspace ./kai-api chat
+  --memory-root /mnt/gdrive/AIS/kai-api-memory
+ais --workspace ./kai-api chat
 ```
 
 The OpenAI Responses API is called with provider-side storage disabled. Before every call the
@@ -103,15 +119,15 @@ described in [API runtime](docs/api-runtime.md).
 ## Inspect and correct memory
 
 ```bash
-acs --workspace ./kai-local memory list
-acs --workspace ./kai-local memory search "pressure and agreement"
-acs --workspace ./kai-local memory history mem_ab12cd34
-acs --workspace ./kai-local memory revise mem_ab12cd34 \
+ais --workspace ./kai-local memory list
+ais --workspace ./kai-local memory search "pressure and agreement"
+ais --workspace ./kai-local memory history mem_ab12cd34
+ais --workspace ./kai-local memory revise mem_ab12cd34 \
   "Care does not require agreement, but evidence can justify revision." \
   --reason "The former wording was too absolute."
-acs --workspace ./kai-local memory retract mem_ab12cd34 --reason "Superseded by evidence."
-acs --workspace ./kai-local memory review
-acs --workspace ./kai-local export --output exports/portable-self-state.json
+ais --workspace ./kai-local memory retract mem_ab12cd34 --reason "Superseded by evidence."
+ais --workspace ./kai-local memory review
+ais --workspace ./kai-local export --output exports/portable-self-state.json
 ```
 
 Every manual action is labeled `user_suggested` in the audit log. An operator cannot silently
@@ -120,10 +136,10 @@ rewrite an agent-authored conclusion and still call it self-authored.
 ## Import an older transcript
 
 ```bash
-acs --workspace ./kai-local import-transcript examples/sample_chat.json \
+ais --workspace ./kai-local import-transcript examples/sample_chat.json \
   --subject KAi --dry-run
-acs --workspace ./kai-local import-transcript examples/sample_chat.json --subject KAi
-acs --workspace ./kai-local memory review
+ais --workspace ./kai-local import-transcript examples/sample_chat.json --subject KAi
+ais --workspace ./kai-local memory review
 ```
 
 Archive self-claims remain `imported_archive` and wait for review; the importer does not turn
@@ -150,6 +166,7 @@ No model server or paid key is required for the unit and pipeline tests.
 - [Security and limitations](docs/security-and-limitations.md)
 - [Source lineage](docs/source-lineage.md)
 - [Implementation references](docs/references.md)
+- [Development roadmap](docs/development-roadmap.md)
 
 ## Current boundary
 

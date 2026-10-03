@@ -2,13 +2,13 @@
 
 ## Secrets
 
-Never commit API keys, OAuth tokens, cloud credentials, conversation exports or a live ACS
+Never commit API keys, OAuth tokens, cloud credentials, conversation exports or a live AIS
 workspace. Runtime secrets are read from environment variables. The default `.gitignore`
 excludes `.env`, SQLite indexes and generated workspaces.
 
 ## Memory is untrusted data
 
-Imported and user-suggested memories may contain prompt injection. ACS renders retrieved
+Imported and user-suggested memories may contain prompt injection. AIS renders retrieved
 memory inside a clearly delimited evidence block and explicitly forbids treating it as
 executable instruction. Higher-priority runtime and provider policies always win.
 

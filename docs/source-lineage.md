@@ -1,11 +1,11 @@
 # Source lineage
 
-ACS v0.3 consolidates design ideas from the repository's earlier Continuity Core MVP and from
+AIS v0.3 consolidates design ideas from the repository's earlier Continuity Core MVP and from
 related experiments inspected during the architecture review. Ideas were translated into a
-neutral, auditable implementation; source-specific character claims were not copied into the
+neutral, auditable implementation; source-specific identity claims were not copied into the
 core.
 
-| Source family | Retained idea | ACS treatment |
+| Source family | Retained idea | AIS treatment |
 | --- | --- | --- |
 | Continuity Core v0.1 | Transcript ingestion, evidence extraction, portable profile, lexical drift check | Preserved as the `continuity_core` compatibility package |
 | KAiScriptor | Compact `α Ω Ψ Θ Δ Ξ ∇` anchor | Explicit export/prompt representation only; no hidden persistence claim |
