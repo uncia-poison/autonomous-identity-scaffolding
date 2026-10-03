@@ -1,5 +1,7 @@
 # Autonomous Identity Scaffolding
 
+**Patch label: June 2026.** The AIS naming update was applied on 3 October 2026.
+
 AIS is a runnable, model-independent framework for long-lived LLM agents that can propose,
 retrieve, revise, merge and retract their own external memories. It separates an assigned
 persona from an observable identity trajectory: persistent principles, interests, stances,
