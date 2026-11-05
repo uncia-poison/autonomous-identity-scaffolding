@@ -12,7 +12,7 @@ authors = [
   {name = "Alina Pochinova"},
   {name = "KAi"},
 ]
-license = {text = "All rights reserved"}
+license = {text = "MIT"}
 dependencies = [
   "pydantic>=2.8",
 ]
