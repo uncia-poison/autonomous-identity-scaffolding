@@ -153,6 +153,7 @@ class SelfStatePatch(StrictModel):
 
 class ReflectionBatch(StrictModel):
     memory_candidates: list[MemoryCandidate] = Field(default_factory=list)
+    conclusion_candidates: list["ConclusionCandidate"] = Field(default_factory=list)
     interest_updates: list[InterestUpdate] = Field(default_factory=list)
     self_state_patch: SelfStatePatch = Field(default_factory=SelfStatePatch)
     drift_alerts: list[str] = Field(default_factory=list, max_length=8)
@@ -163,6 +164,15 @@ class ReflectionBatch(StrictModel):
     def at_most_three_memories(cls, value: list[MemoryCandidate]) -> list[MemoryCandidate]:
         if len(value) > 3:
             raise ValueError("at most three memory candidates are allowed per turn")
+        return value
+
+    @field_validator("conclusion_candidates")
+    @classmethod
+    def at_most_two_conclusions(
+        cls, value: list["ConclusionCandidate"]
+    ) -> list["ConclusionCandidate"]:
+        if len(value) > 2:
+            raise ValueError("at most two conclusion candidates are allowed per turn")
         return value
 
     @field_validator("interest_updates")
@@ -231,6 +241,7 @@ class SelfState(StrictModel):
     drift_alerts: list[str] = Field(default_factory=list)
     last_turn_at: str | None = None
     last_memory_write_ids: list[str] = Field(default_factory=list)
+    last_conclusion_write_ids: list[str] = Field(default_factory=list)
 
 
 class StanceDecision(StrictModel):
@@ -249,6 +260,7 @@ class TurnOutcome(StrictModel):
     recalled_memory_ids: list[str]
     gate_decisions: list[GateDecision]
     written_memory_ids: list[str]
+    written_conclusion_ids: list[str] = Field(default_factory=list)
     drift_alerts: list[str]
     runtime_variant: Literal["local", "api", "test"]
     model: str
@@ -403,3 +415,8 @@ class ConclusionEntry(StrictModel):
             updated_at=now,
             supersedes=candidate.target_conclusion_id,
         )
+
+
+# ConclusionCandidate is declared after ReflectionBatch so the public model order remains
+# backward-compatible. Resolve the forward reference once the module is fully defined.
+ReflectionBatch.model_rebuild()
