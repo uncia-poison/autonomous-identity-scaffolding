@@ -11,6 +11,8 @@ from acs.clients.ollama import OllamaClient
 from acs.clients.openai_responses import OpenAIResponsesClient
 from acs.models import (
     CharacterGenome,
+    ConclusionCandidate,
+    ConclusionKind,
     InterestUpdate,
     MemoryCandidate,
     MemoryOrigin,
@@ -174,3 +176,65 @@ def test_ollama_reflection_sends_json_schema(monkeypatch: object) -> None:
     payload = json.loads(requests[0][0].data.decode("utf-8"))
     assert payload["format"]["title"] == "ReflectionBatch"
     assert payload["options"]["temperature"] == 0.0
+
+
+
+def test_turn_persists_and_reuses_agent_conclusion(tmp_path: Path) -> None:
+    reflection = ReflectionBatch(
+        conclusion_candidates=[
+            ConclusionCandidate(
+                kind=ConclusionKind.SELF_BELIEF,
+                claim="I revise durable beliefs when their supporting evidence changes.",
+                scope="identity-maintenance",
+                origin=MemoryOrigin.AGENT_PROPOSED,
+                rationale="The response explicitly chose revision over preserving a contradicted claim.",
+                confidence=0.86,
+                stability=0.74,
+                identity_relevance=0.82,
+                evidence_ids=["turn:test:evidence"],
+                depends_on=["turn:test:evidence"],
+                tags=["identity", "revision"],
+            )
+        ]
+    )
+    first_client = FakeModelClient(
+        response="I would revise the conclusion rather than erase the history.",
+        reflection=reflection,
+    )
+    runtime = make_runtime(tmp_path, first_client)
+    first = runtime.turn("What should happen when evidence changes?")
+    assert len(first.written_conclusion_ids) == 1
+    conclusion_id = first.written_conclusion_ids[0]
+    assert runtime.repository.ledger.conclusions[conclusion_id].origin == MemoryOrigin.AGENT_PROPOSED
+
+    second_client = FakeModelClient(response="That conclusion is part of the current evidence-backed self-model.")
+    runtime.client = second_client
+    runtime.turn("How do you handle identity revision?")
+    system = second_client.generate_calls[0][0]["content"]
+    assert conclusion_id in system
+    assert "I revise durable beliefs" in system
+
+
+def test_low_stability_identity_conclusion_is_not_auto_persisted(tmp_path: Path) -> None:
+    reflection = ReflectionBatch(
+        conclusion_candidates=[
+            ConclusionCandidate(
+                kind=ConclusionKind.SELF_PRINCIPLE,
+                claim="One surprising turn defines who I am.",
+                origin=MemoryOrigin.AGENT_PROPOSED,
+                rationale="Only one episode supports this.",
+                confidence=0.7,
+                stability=0.2,
+                identity_relevance=0.95,
+                evidence_ids=["single-episode"],
+            )
+        ]
+    )
+    runtime = make_runtime(tmp_path, FakeModelClient(reflection=reflection))
+    outcome = runtime.turn("Draw a permanent conclusion from this one event.")
+    assert outcome.written_conclusion_ids == []
+    assert any(
+        item.startswith("identity_conclusion_insufficient_stability:")
+        for item in outcome.drift_alerts
+    )
+    assert runtime.repository.ledger.conclusions == {}
