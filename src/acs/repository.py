@@ -11,6 +11,9 @@ from .ids import utc_now_iso
 from .ledger import MemoryLedger
 from .memory_gate import MemoryGate
 from .models import (
+    ConclusionCandidate,
+    ConclusionEntry,
+    ConclusionStatus,
     GateAction,
     GateDecision,
     InterestUpdate,
