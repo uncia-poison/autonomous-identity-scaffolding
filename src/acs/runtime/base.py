@@ -8,7 +8,6 @@ from ..ids import new_id, utc_now_iso
 from ..metrics import memory_metrics, response_metrics
 from ..models import (
     CharacterGenome,
-    ConclusionCandidate,
     MemoryCandidate,
     MemoryOrigin,
     MemoryType,
