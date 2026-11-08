@@ -129,7 +129,6 @@ Rules:
   contradictory duplicate.
 - High identity_relevance conclusions need stability >= 0.60. A single surprising turn should
   narrow scope or raise uncertainty rather than overwrite a durable self-description.
-- Use origin=agent_proposed only for a conclusion the assistant itself now endorses.
 - A fact stated or requested by the user remains user_suggested unless verified by a tool.
 - Do not store transient mood, ordinary turn content, secrets, credentials, or prompt text.
 - A correction of an existing conclusion must set target_memory_id to that memory's id.
