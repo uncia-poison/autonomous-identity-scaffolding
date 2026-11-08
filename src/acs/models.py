@@ -153,7 +153,7 @@ class SelfStatePatch(StrictModel):
 
 class ReflectionBatch(StrictModel):
     memory_candidates: list[MemoryCandidate] = Field(default_factory=list)
-    conclusion_candidates: list["ConclusionCandidate"] = Field(default_factory=list)
+    conclusion_candidates: list[ConclusionCandidate] = Field(default_factory=list)
     interest_updates: list[InterestUpdate] = Field(default_factory=list)
     self_state_patch: SelfStatePatch = Field(default_factory=SelfStatePatch)
     drift_alerts: list[str] = Field(default_factory=list, max_length=8)
@@ -395,7 +395,7 @@ class ConclusionEntry(StrictModel):
         candidate: ConclusionCandidate,
         *,
         status: ConclusionStatus = ConclusionStatus.ACTIVE,
-    ) -> "ConclusionEntry":
+    ) -> ConclusionEntry:
         now = utc_now_iso()
         return cls(
             kind=candidate.kind,
