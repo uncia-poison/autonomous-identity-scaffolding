@@ -59,6 +59,13 @@
       },
       "title": "Recent Lessons",
       "type": "array"
+    },
+    "last_conclusion_write_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Last Conclusion Write Ids",
+      "type": "array"
     }
   },
   "title": "SelfState",
