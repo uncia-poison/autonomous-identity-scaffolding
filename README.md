@@ -31,7 +31,8 @@ agent's history.
   `tool_derived` and `imported_archive` never collapse into one unlabeled blob.
 - A deterministic memory gate with salience, stability, confidence, usefulness,
   imposition-risk and duplicate checks.
-- Revision lineage: the current memory and every earlier version remain inspectable.\n- A separate **Conclusion Ledger** stores durable inferences without pretending that raw memories are conclusions. Conclusions retain evidence, counterevidence, dependency IDs, provenance, confidence, stability, identity relevance and full revision history.
+- Revision lineage: the current memory and every earlier version remain inspectable.
+- A separate **Conclusion Ledger** stores durable inferences without pretending that raw memories are conclusions. Conclusions retain evidence, counterevidence, dependency IDs, provenance, confidence, stability, identity relevance and full revision history.
 - Lexical retrieval with recency, stability and provenance weighting; SQLite FTS for the
   local runtime.
 - Pre-response pressure detection and stance selection without turning disagreement into
@@ -129,7 +130,10 @@ ais --workspace ./kai-local memory revise mem_ab12cd34 \
   --reason "The former wording was too absolute."
 ais --workspace ./kai-local memory retract mem_ab12cd34 --reason "Superseded by evidence."
 ais --workspace ./kai-local memory review
-ais --workspace ./kai-local export --output exports/portable-self-state.json\n\n# Python API: keep evidence and conclusions separate\n# repo.add_conclusion(ConclusionCandidate(...))
+ais --workspace ./kai-local export --output exports/portable-self-state.json
+
+# Python API: keep evidence and conclusions separate
+# repo.add_conclusion(ConclusionCandidate(...))
 ```
 
 Every manual action is labeled `user_suggested` in the audit log. An operator cannot silently
