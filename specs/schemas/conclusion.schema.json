@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/ais/conclusion.schema.json",
+  "title": "AIS Identity Conclusion",
+  "type": "object",
+  "required": [
+    "conclusion_id",
+    "kind",
+    "claim",
+    "scope",
+    "origin",
+    "rationale",
+    "confidence",
+    "stability",
+    "identity_relevance",
+    "status",
+    "revision"
+  ],
+  "properties": {
+    "conclusion_id": {
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "self_belief",
+        "self_principle",
+        "self_capability",
+        "self_limit",
+        "relationship_model",
+        "world_belief",
+        "strategy",
+        "lesson"
+      ]
+    },
+    "claim": {
+      "type": "string",
+      "minLength": 3
+    },
+    "scope": {
+      "type": "string"
+    },
+    "origin": {
+      "enum": [
+        "agent_proposed",
+        "user_suggested",
+        "system_observed",
+        "tool_derived",
+        "imported_archive"
+      ]
+    },
+    "rationale": {
+      "type": "string"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "stability": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "identity_relevance": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "counterevidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "depends_on": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "enum": [
+        "active",
+        "review",
+        "uncertain",
+        "stale",
+        "retracted"
+      ]
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    },
+    "last_reviewed_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "supersedes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false
+}
