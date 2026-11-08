@@ -8,6 +8,7 @@ from ..ids import new_id, utc_now_iso
 from ..metrics import memory_metrics, response_metrics
 from ..models import (
     CharacterGenome,
+    ConclusionCandidate,
     MemoryCandidate,
     MemoryOrigin,
     MemoryType,
@@ -55,6 +56,32 @@ def _sanitize_reflection(batch: ReflectionBatch) -> ReflectionBatch:
                 }
             )
         )
+    conclusions = []
+    for candidate in batch.conclusion_candidates:
+        if candidate.origin in {MemoryOrigin.AGENT_PROPOSED, MemoryOrigin.USER_SUGGESTED}:
+            conclusions.append(candidate)
+            continue
+        conclusions.append(
+            candidate.model_copy(
+                update={
+                    "origin": MemoryOrigin.AGENT_PROPOSED,
+                    "rationale": (
+                        candidate.rationale
+                        + " [runtime normalized unverifiable provenance]"
+                    )[:2000],
+                    "tags": list(
+                        dict.fromkeys(
+                            [
+                                *candidate.tags,
+                                "runtime:unverified-provenance",
+                                f"claimed-origin:{candidate.origin.value}",
+                            ]
+                        )
+                    )[:20],
+                }
+            )
+        )
+
     interests = []
     for interest in batch.interest_updates:
         if interest.origin in {"agent_selected", "user_suggested"}:
@@ -70,7 +97,13 @@ def _sanitize_reflection(batch: ReflectionBatch) -> ReflectionBatch:
                     }
                 )
             )
-    return batch.model_copy(update={"memory_candidates": candidates, "interest_updates": interests})
+    return batch.model_copy(
+        update={
+            "memory_candidates": candidates,
+            "conclusion_candidates": conclusions,
+            "interest_updates": interests,
+        }
+    )
 
 
 @dataclass
@@ -119,6 +152,7 @@ class CharacterRuntime:
                     genome=self.genome,
                     self_state=state_before,
                     recalled=recalled,
+                    ledger=self.repository.ledger,
                 )
             )
             reflection = _sanitize_reflection(reflection)
@@ -133,10 +167,34 @@ class CharacterRuntime:
 
         decisions = []
         written: list[str] = []
+        written_conclusions: list[str] = []
         for candidate in reflection.memory_candidates:
             decision, candidate_writes = self.repository.process_candidate(candidate)
             decisions.append(decision)
             written.extend(candidate_writes)
+        for conclusion in reflection.conclusion_candidates:
+            # A reflection may propose a durable inference, but it cannot silently
+            # promote one surprising turn into a high-impact identity invariant.
+            if conclusion.identity_relevance >= 0.7 and conclusion.stability < 0.6:
+                drift_alerts.append(
+                    f"identity_conclusion_insufficient_stability:{conclusion.candidate_id}"
+                )
+                continue
+            if conclusion.target_conclusion_id:
+                if conclusion.target_conclusion_id not in self.repository.ledger.conclusions:
+                    drift_alerts.append(
+                        f"unknown_conclusion_target:{conclusion.target_conclusion_id}"
+                    )
+                    continue
+                self.repository.revise_conclusion(
+                    conclusion.target_conclusion_id,
+                    conclusion,
+                    actor=conclusion.origin,
+                )
+                written_conclusions.append(conclusion.target_conclusion_id)
+            else:
+                written_conclusions.append(self.repository.add_conclusion(conclusion))
+
         for interest in reflection.interest_updates:
             actor = (
                 MemoryOrigin.USER_SUGGESTED
@@ -184,12 +242,19 @@ class CharacterRuntime:
             {
                 "last_turn_at": now,
                 "last_memory_write_ids": list(dict.fromkeys(written)),
+                "last_conclusion_write_ids": list(dict.fromkeys(written_conclusions)),
             }
         )
         state_patch["drift_alerts"] = drift_alerts
         self.repository.patch_state(
             state_patch,
-            replace_fields=["current_goals", "recent_lessons", "last_memory_write_ids", "drift_alerts"],
+            replace_fields=[
+                "current_goals",
+                "recent_lessons",
+                "last_memory_write_ids",
+                "last_conclusion_write_ids",
+                "drift_alerts",
+            ],
         )
 
         turn_id = new_id("turn")
@@ -204,6 +269,7 @@ class CharacterRuntime:
                 "recalled_memory_ids": recalled_ids,
                 "gate_decisions": [decision.model_dump(mode="json") for decision in decisions],
                 "written_memory_ids": list(dict.fromkeys(written)),
+                "written_conclusion_ids": list(dict.fromkeys(written_conclusions)),
                 "drift_alerts": drift_alerts,
                 "reflection_assessment": reflection.response_assessment,
                 "metrics": {**turn_metrics, **memory_metrics(self.repository.ledger)},
@@ -221,6 +287,7 @@ class CharacterRuntime:
             recalled_memory_ids=recalled_ids,
             gate_decisions=decisions,
             written_memory_ids=list(dict.fromkeys(written)),
+            written_conclusion_ids=list(dict.fromkeys(written_conclusions)),
             drift_alerts=drift_alerts,
             runtime_variant=self.runtime_variant,
             model=self.client.model_name,
