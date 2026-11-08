@@ -4,7 +4,14 @@ from collections.abc import Iterable
 from copy import deepcopy
 from typing import Any
 
-from .models import (\n    ConclusionEntry,\n    ConclusionStatus,\n    InterestUpdate,\n    MemoryEntry,\n    MemoryEvent,\n    MemoryStatus,\n)
+from .models import (
+    ConclusionEntry,
+    ConclusionStatus,
+    InterestUpdate,
+    MemoryEntry,
+    MemoryEvent,
+    MemoryStatus,
+)
 
 
 class LedgerError(RuntimeError):
@@ -17,7 +24,9 @@ class MemoryLedger:
     def __init__(self) -> None:
         self.memories: dict[str, MemoryEntry] = {}
         self.memory_versions: dict[str, list[MemoryEntry]] = {}
-        self.interests: dict[str, InterestUpdate] = {}\n        self.conclusions: dict[str, ConclusionEntry] = {}\n        self.conclusion_versions: dict[str, list[ConclusionEntry]] = {}
+        self.interests: dict[str, InterestUpdate] = {}
+        self.conclusions: dict[str, ConclusionEntry] = {}
+        self.conclusion_versions: dict[str, list[ConclusionEntry]] = {}
         self.turns: list[dict[str, Any]] = []
         self.gate_decisions: list[dict[str, Any]] = []
         self.review_resolutions: list[dict[str, Any]] = []
@@ -271,6 +280,7 @@ class MemoryLedger:
             "schema_version": "acs.snapshot.v1",
             "event_count": len(self.applied_event_ids),
             "memories": [entry.model_dump(mode="json") for entry in self.memories.values()],
-            "interests": [entry.model_dump(mode="json") for entry in self.interests.values()],\n            "conclusions": [entry.model_dump(mode="json") for entry in self.conclusions.values()],
+            "interests": [entry.model_dump(mode="json") for entry in self.interests.values()],
+            "conclusions": [entry.model_dump(mode="json") for entry in self.conclusions.values()],
             "state": deepcopy(self.state),
         }
