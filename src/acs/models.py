@@ -169,8 +169,8 @@ class ReflectionBatch(StrictModel):
     @field_validator("conclusion_candidates")
     @classmethod
     def at_most_two_conclusions(
-        cls, value: list["ConclusionCandidate"]
-    ) -> list["ConclusionCandidate"]:
+        cls, value: list[ConclusionCandidate]
+    ) -> list[ConclusionCandidate]:
         if len(value) > 2:
             raise ValueError("at most two conclusion candidates are allowed per turn")
         return value
