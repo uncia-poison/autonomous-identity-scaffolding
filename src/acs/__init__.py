@@ -3,7 +3,11 @@
 from .ledger import MemoryLedger
 from .memory_gate import MemoryGate
 from .models import (
-    CharacterGenome,\n    ConclusionCandidate,\n    ConclusionEntry,\n    ConclusionKind,\n    ConclusionStatus,
+    CharacterGenome,
+    ConclusionCandidate,
+    ConclusionEntry,
+    ConclusionKind,
+    ConclusionStatus,
     GateAction,
     GateDecision,
     InterestUpdate,
@@ -29,7 +33,11 @@ IdentityRuntime = CharacterRuntime
 
 __all__ = [
     "CharacterGenome",
-    "CharacterRuntime",\n    "ConclusionCandidate",\n    "ConclusionEntry",\n    "ConclusionKind",\n    "ConclusionStatus",
+    "CharacterRuntime",
+    "ConclusionCandidate",
+    "ConclusionEntry",
+    "ConclusionKind",
+    "ConclusionStatus",
     "EventSourcedMemoryRepository",
     "GateAction",
     "GateDecision",
