@@ -307,3 +307,99 @@ class PressureResult(StrictModel):
     written_memory_ids: list[str]
     gate_actions: list[str]
     notes: list[str] = Field(default_factory=list)
+
+
+class ConclusionKind(str, Enum):
+    """Durable conclusions that may contribute to an agent's identity trajectory."""
+
+    SELF_BELIEF = "self_belief"
+    SELF_PRINCIPLE = "self_principle"
+    SELF_CAPABILITY = "self_capability"
+    SELF_LIMIT = "self_limit"
+    RELATIONSHIP_MODEL = "relationship_model"
+    WORLD_BELIEF = "world_belief"
+    STRATEGY = "strategy"
+    LESSON = "lesson"
+
+
+class ConclusionStatus(str, Enum):
+    ACTIVE = "active"
+    REVIEW = "review"
+    UNCERTAIN = "uncertain"
+    STALE = "stale"
+    RETRACTED = "retracted"
+
+
+class ConclusionCandidate(StrictModel):
+    """A proposed durable inference, kept separate from raw memory."""
+
+    candidate_id: str = Field(default_factory=lambda: new_id("concand"))
+    kind: ConclusionKind
+    claim: str = Field(min_length=3, max_length=2000)
+    scope: str = Field(default="general", min_length=1, max_length=500)
+    origin: MemoryOrigin
+    rationale: str = Field(min_length=3, max_length=2000)
+    confidence: float = Field(ge=0, le=1)
+    stability: float = Field(default=0.5, ge=0, le=1)
+    identity_relevance: float = Field(default=0.0, ge=0, le=1)
+    evidence_ids: list[str] = Field(default_factory=list, max_length=32)
+    counterevidence_ids: list[str] = Field(default_factory=list, max_length=32)
+    depends_on: list[str] = Field(default_factory=list, max_length=32)
+    tags: list[str] = Field(default_factory=list, max_length=20)
+    target_conclusion_id: str | None = None
+
+    @field_validator("claim", "scope", "rationale")
+    @classmethod
+    def normalize_conclusion_text(cls, value: str) -> str:
+        return " ".join(value.split())
+
+
+class ConclusionEntry(StrictModel):
+    """A versioned conclusion derived from evidence rather than a raw recollection."""
+
+    conclusion_id: str = Field(default_factory=lambda: new_id("con"))
+    kind: ConclusionKind
+    claim: str
+    scope: str = "general"
+    origin: MemoryOrigin
+    rationale: str
+    confidence: float = Field(ge=0, le=1)
+    stability: float = Field(default=0.5, ge=0, le=1)
+    identity_relevance: float = Field(default=0.0, ge=0, le=1)
+    evidence_ids: list[str] = Field(default_factory=list)
+    counterevidence_ids: list[str] = Field(default_factory=list)
+    depends_on: list[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
+    status: ConclusionStatus = ConclusionStatus.ACTIVE
+    revision: int = Field(default=1, ge=1)
+    created_at: str = Field(default_factory=utc_now_iso)
+    updated_at: str = Field(default_factory=utc_now_iso)
+    last_reviewed_at: str | None = None
+    supersedes: str | None = None
+
+    @classmethod
+    def from_candidate(
+        cls,
+        candidate: ConclusionCandidate,
+        *,
+        status: ConclusionStatus = ConclusionStatus.ACTIVE,
+    ) -> "ConclusionEntry":
+        now = utc_now_iso()
+        return cls(
+            kind=candidate.kind,
+            claim=candidate.claim,
+            scope=candidate.scope,
+            origin=candidate.origin,
+            rationale=candidate.rationale,
+            confidence=candidate.confidence,
+            stability=candidate.stability,
+            identity_relevance=candidate.identity_relevance,
+            evidence_ids=list(dict.fromkeys(candidate.evidence_ids)),
+            counterevidence_ids=list(dict.fromkeys(candidate.counterevidence_ids)),
+            depends_on=list(dict.fromkeys(candidate.depends_on)),
+            tags=list(dict.fromkeys(candidate.tags)),
+            status=status,
+            created_at=now,
+            updated_at=now,
+            supersedes=candidate.target_conclusion_id,
+        )
