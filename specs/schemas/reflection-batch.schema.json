@@ -1,5 +1,128 @@
 {
   "$defs": {
+    "ConclusionCandidate": {
+      "additionalProperties": false,
+      "description": "A proposed durable inference, kept separate from raw memory.",
+      "properties": {
+        "candidate_id": {
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "claim": {
+          "maxLength": 2000,
+          "minLength": 3,
+          "title": "Claim",
+          "type": "string"
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "counterevidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 32,
+          "title": "Counterevidence Ids",
+          "type": "array"
+        },
+        "depends_on": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 32,
+          "title": "Depends On",
+          "type": "array"
+        },
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 32,
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "identity_relevance": {
+          "default": 0.0,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Identity Relevance",
+          "type": "number"
+        },
+        "kind": {
+          "$ref": "#/$defs/ConclusionKind"
+        },
+        "origin": {
+          "$ref": "#/$defs/MemoryOrigin"
+        },
+        "rationale": {
+          "maxLength": 2000,
+          "minLength": 3,
+          "title": "Rationale",
+          "type": "string"
+        },
+        "scope": {
+          "default": "general",
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Scope",
+          "type": "string"
+        },
+        "stability": {
+          "default": 0.5,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Stability",
+          "type": "number"
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "title": "Tags",
+          "type": "array"
+        },
+        "target_conclusion_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target Conclusion Id"
+        }
+      },
+      "required": [
+        "kind",
+        "claim",
+        "origin",
+        "rationale",
+        "confidence"
+      ],
+      "title": "ConclusionCandidate",
+      "type": "object"
+    },
+    "ConclusionKind": {
+      "description": "Durable conclusions that may contribute to an agent's identity trajectory.",
+      "enum": [
+        "self_belief",
+        "self_principle",
+        "self_capability",
+        "self_limit",
+        "relationship_model",
+        "world_belief",
+        "strategy",
+        "lesson"
+      ],
+      "title": "ConclusionKind",
+      "type": "string"
+    },
     "InterestUpdate": {
       "additionalProperties": false,
       "properties": {
@@ -235,6 +358,13 @@
   },
   "additionalProperties": false,
   "properties": {
+    "conclusion_candidates": {
+      "items": {
+        "$ref": "#/$defs/ConclusionCandidate"
+      },
+      "title": "Conclusion Candidates",
+      "type": "array"
+    },
     "drift_alerts": {
       "items": {
         "type": "string"

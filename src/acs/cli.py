@@ -16,6 +16,8 @@ from .clients.openai_responses import OpenAIResponsesClient
 from .metrics import memory_metrics
 from .models import (
     CharacterGenome,
+    ConclusionEntry,
+    ConclusionStatus,
     InterestUpdate,
     MemoryCandidate,
     MemoryEvent,
@@ -348,7 +350,24 @@ def command_import_transcript(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_conclusion_review(args: argparse.Namespace) -> int:
+    repository = _repository(_workspace(args))
+    if args.conclusion_command == "pending":
+        print(_json([
+            entry.model_dump(mode="json") for entry in repository.ledger.conclusions.values()
+            if entry.status in {ConclusionStatus.REVIEW, ConclusionStatus.UNCERTAIN, ConclusionStatus.STALE}
+        ]))
+        return 0
+    status = ConclusionStatus.ACTIVE if args.conclusion_command == "approve" else ConclusionStatus.RETRACTED
+    repository.review_conclusion(
+        args.conclusion_id, status=status, reason=args.reason,
+        actor=MemoryOrigin.USER_SUGGESTED, expected_revision=args.revision,
+    )
+    return 0
+
+
 SCHEMA_MODELS = {
+    "conclusion": ConclusionEntry,
     "character-genome": CharacterGenome,
     "interest-update": InterestUpdate,
     "memory-candidate": MemoryCandidate,
@@ -494,6 +513,16 @@ def build_parser() -> argparse.ArgumentParser:
     memory_reject.add_argument("candidate_id")
     memory_reject.add_argument("--reason", required=True)
     memory_reject.set_defaults(func=command_memory_resolve)
+
+    conclusion = subparsers.add_parser("conclusion", help="review durable inferences")
+    conclusion_sub = conclusion.add_subparsers(dest="conclusion_command", required=True)
+    conclusion_sub.add_parser("pending").set_defaults(func=command_conclusion_review)
+    for action in ("approve", "reject"):
+        command = conclusion_sub.add_parser(action)
+        command.add_argument("conclusion_id")
+        command.add_argument("--revision", type=int, required=True)
+        command.add_argument("--reason", required=True)
+        command.set_defaults(func=command_conclusion_review)
 
     schema = subparsers.add_parser("schema", help="JSON Schema utilities")
     schema_sub = schema.add_subparsers(dest="schema_command", required=True)

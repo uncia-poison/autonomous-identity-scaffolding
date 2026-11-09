@@ -11,6 +11,9 @@ from .ids import utc_now_iso
 from .ledger import MemoryLedger
 from .memory_gate import MemoryGate
 from .models import (
+    ConclusionCandidate,
+    ConclusionEntry,
+    ConclusionStatus,
     GateAction,
     GateDecision,
     InterestUpdate,
@@ -21,6 +24,7 @@ from .models import (
     MemoryStatus,
 )
 from .retrieval import MemoryRetriever, RetrievedMemory
+from .security import contains_obvious_secret
 from .storage.base import EventStore
 from .text import tokens
 
@@ -246,6 +250,128 @@ class EventSourcedMemoryRepository:
                 event_type="memory.retract",
                 actor_origin=actor,
                 payload={"target_id": memory_id, "reason": reason},
+            )
+        )
+        self.store.write_snapshot(self.ledger.to_snapshot())
+
+    def add_conclusion(
+        self, candidate: ConclusionCandidate, *, status: ConclusionStatus = ConclusionStatus.ACTIVE,
+    ) -> str:
+        """Persist a durable inference without collapsing it into raw memory."""
+        if contains_obvious_secret(candidate.model_dump_json()):
+            raise ValueError("possible secret in conclusion candidate")
+        entry = ConclusionEntry.from_candidate(candidate, status=status)
+        self.append(
+            MemoryEvent(
+                event_type="conclusion.add",
+                actor_origin=candidate.origin,
+                payload={
+                    "entry": entry.model_dump(mode="json"),
+                    "candidate_id": candidate.candidate_id,
+                },
+            )
+        )
+        self.store.write_snapshot(self.ledger.to_snapshot())
+        return entry.conclusion_id
+
+    def revise_conclusion(
+        self,
+        conclusion_id: str,
+        candidate: ConclusionCandidate,
+        *,
+        actor: MemoryOrigin | None = None,
+    ) -> None:
+        current = self.ledger.conclusions.get(conclusion_id)
+        if current is None:
+            raise KeyError(conclusion_id)
+        if contains_obvious_secret(candidate.model_dump_json()):
+            raise ValueError("possible secret in conclusion candidate")
+        if candidate.origin != current.origin:
+            raise ValueError("conclusion revision cannot change the source origin")
+        patch = {
+            "kind": candidate.kind.value,
+            "claim": candidate.claim,
+            "scope": candidate.scope,
+            "rationale": candidate.rationale,
+            "confidence": candidate.confidence,
+            "stability": candidate.stability,
+            "identity_relevance": candidate.identity_relevance,
+            "evidence_ids": list(dict.fromkeys(candidate.evidence_ids)),
+            "counterevidence_ids": list(dict.fromkeys(candidate.counterevidence_ids)),
+            "depends_on": list(dict.fromkeys(candidate.depends_on)),
+            "tags": list(dict.fromkeys(candidate.tags)),
+            "status": current.status.value,
+        }
+        self.append(
+            MemoryEvent(
+                event_type="conclusion.revise",
+                actor_origin=actor or candidate.origin,
+                payload={"target_id": conclusion_id, "patch": patch},
+            )
+        )
+        self.store.write_snapshot(self.ledger.to_snapshot())
+
+    def mark_conclusion_stale(
+        self,
+        conclusion_id: str,
+        reason: str,
+        *,
+        actor: MemoryOrigin = MemoryOrigin.SYSTEM_OBSERVED,
+    ) -> None:
+        if conclusion_id not in self.ledger.conclusions:
+            raise KeyError(conclusion_id)
+        self.append(
+            MemoryEvent(
+                event_type="conclusion.mark_stale",
+                actor_origin=actor,
+                payload={"target_id": conclusion_id, "reason": reason},
+            )
+        )
+        self.store.write_snapshot(self.ledger.to_snapshot())
+
+    def review_conclusion(
+        self,
+        conclusion_id: str,
+        *,
+        status: ConclusionStatus = ConclusionStatus.ACTIVE,
+        reason: str,
+        actor: MemoryOrigin = MemoryOrigin.AGENT_PROPOSED,
+        expected_revision: int | None = None,
+    ) -> None:
+        current = self.ledger.conclusions[conclusion_id]
+        if expected_revision is not None and current.revision != expected_revision:
+            raise ValueError("conclusion changed since review")
+        if current.status == ConclusionStatus.RETRACTED:
+            raise ValueError("retracted conclusion cannot be reopened through review")
+        if not reason.strip() or contains_obvious_secret(reason):
+            raise ValueError("review requires a nonempty reason without credentials")
+        self.append(
+            MemoryEvent(
+                event_type="conclusion.review",
+                actor_origin=actor,
+                payload={
+                    "target_id": conclusion_id,
+                    "status": status.value,
+                    "reason": reason,
+                },
+            )
+        )
+        self.store.write_snapshot(self.ledger.to_snapshot())
+
+    def retract_conclusion(
+        self,
+        conclusion_id: str,
+        reason: str,
+        *,
+        actor: MemoryOrigin,
+    ) -> None:
+        if conclusion_id not in self.ledger.conclusions:
+            raise KeyError(conclusion_id)
+        self.append(
+            MemoryEvent(
+                event_type="conclusion.retract",
+                actor_origin=actor,
+                payload={"target_id": conclusion_id, "reason": reason},
             )
         )
         self.store.write_snapshot(self.ledger.to_snapshot())

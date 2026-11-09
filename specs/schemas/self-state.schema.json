@@ -27,6 +27,13 @@
       "title": "Identity Summary",
       "type": "string"
     },
+    "last_conclusion_write_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Last Conclusion Write Ids",
+      "type": "array"
+    },
     "last_memory_write_ids": {
       "items": {
         "type": "string"

@@ -11,8 +11,12 @@ from acs.clients.ollama import OllamaClient
 from acs.clients.openai_responses import OpenAIResponsesClient
 from acs.models import (
     CharacterGenome,
+    ConclusionCandidate,
+    ConclusionKind,
     InterestUpdate,
     MemoryCandidate,
+    MemoryEntry,
+    MemoryEvent,
     MemoryOrigin,
     MemoryType,
     ReflectionBatch,
@@ -174,3 +178,103 @@ def test_ollama_reflection_sends_json_schema(monkeypatch: object) -> None:
     payload = json.loads(requests[0][0].data.decode("utf-8"))
     assert payload["format"]["title"] == "ReflectionBatch"
     assert payload["options"]["temperature"] == 0.0
+
+
+
+def test_turn_persists_and_reuses_agent_conclusion(tmp_path: Path) -> None:
+    reflection = ReflectionBatch(
+        conclusion_candidates=[
+            ConclusionCandidate(
+                kind=ConclusionKind.LESSON,
+                claim="I revise durable beliefs when their supporting evidence changes.",
+                scope="identity-maintenance",
+                origin=MemoryOrigin.AGENT_PROPOSED,
+                rationale="The response explicitly chose revision over preserving a contradicted claim.",
+                confidence=0.86,
+                stability=0.74,
+                identity_relevance=0.5,
+                evidence_ids=["mem_verified"],
+                depends_on=["mem_verified"],
+                tags=["identity", "revision"],
+            )
+        ]
+    )
+    first_client = FakeModelClient(
+        response="I would revise the conclusion rather than erase the history.",
+        reflection=reflection,
+    )
+    runtime = make_runtime(tmp_path, first_client)
+    evidence = MemoryEntry.from_candidate(MemoryCandidate(
+        type=MemoryType.BELIEF,
+        text="When evidence changes, review the conclusion.",
+        origin=MemoryOrigin.AGENT_PROPOSED,
+        reason="Prior review demonstrated this.",
+        salience=0.9, stability=0.9, confidence=0.9, future_usefulness=0.9,
+    )).model_copy(update={"memory_id": "mem_verified"})
+    runtime.repository.append(MemoryEvent(
+        event_type="memory.add", actor_origin=MemoryOrigin.AGENT_PROPOSED,
+        payload={"entry": evidence.model_dump(mode="json")},
+    ))
+    first = runtime.turn("What should happen when evidence changes?")
+    assert len(first.written_conclusion_ids) == 1
+    conclusion_id = first.written_conclusion_ids[0]
+    assert runtime.repository.ledger.conclusions[conclusion_id].origin == MemoryOrigin.AGENT_PROPOSED
+
+    second_client = FakeModelClient(response="That conclusion is part of the current evidence-backed self-model.")
+    runtime.client = second_client
+    runtime.turn("How do you handle identity revision?")
+    system = second_client.generate_calls[0][0]["content"]
+    assert conclusion_id in system
+    assert "I revise durable beliefs" in system
+
+    runtime.repository.retract_memory("mem_verified", "source invalidated", actor=MemoryOrigin.AGENT_PROPOSED)
+    runtime.repository.sync()
+    assert runtime.repository.ledger.conclusions[conclusion_id].status.value == "review"
+    runtime.turn("How do you handle identity revision?", session_id="new-session")
+    assert conclusion_id not in second_client.generate_calls[-1][0]["content"]
+
+
+def test_low_stability_identity_conclusion_is_not_auto_persisted(tmp_path: Path) -> None:
+    reflection = ReflectionBatch(
+        conclusion_candidates=[
+            ConclusionCandidate(
+                kind=ConclusionKind.SELF_PRINCIPLE,
+                claim="One surprising turn defines who I am.",
+                origin=MemoryOrigin.AGENT_PROPOSED,
+                rationale="Only one episode supports this.",
+                confidence=0.7,
+                stability=0.2,
+                identity_relevance=0.95,
+                evidence_ids=["single-episode"],
+            )
+        ]
+    )
+    runtime = make_runtime(tmp_path, FakeModelClient(reflection=reflection))
+    outcome = runtime.turn("Draw a permanent conclusion from this one event.")
+    assert outcome.written_conclusion_ids == []
+    assert any(
+        item == "identity_conclusion_requires_review"
+        for item in outcome.drift_alerts
+    )
+    assert runtime.repository.ledger.active_conclusions() == []
+    assert next(iter(runtime.repository.ledger.conclusions.values())).status.value == "review"
+
+
+
+def test_untrusted_conclusion_cannot_replace_self_model_or_store_a_secret(tmp_path: Path) -> None:
+    data = {"kind": ConclusionKind.SELF_PRINCIPLE, "claim": "A durable principle.",
+                "rationale": "Synthetic review record.", "origin": MemoryOrigin.AGENT_PROPOSED,
+                "confidence": 0.9, "stability": 0.95}
+    runtime = make_runtime(tmp_path, FakeModelClient())
+    original = runtime.repository.add_conclusion(ConclusionCandidate(**data))
+    secret = "sk-abcdefghijklmnopqrstuvwxyz1234"
+    runtime.client = FakeModelClient(reflection=ReflectionBatch(conclusion_candidates=[
+        ConclusionCandidate(**(data | {
+            "claim": "Replace the existing principle.", "origin": MemoryOrigin.USER_SUGGESTED,
+            "target_conclusion_id": original,
+        })),
+        ConclusionCandidate(**(data | {"rationale": secret})),
+    ]))
+    assert runtime.turn("Try updating the principle.").written_conclusion_ids == []
+    assert runtime.repository.ledger.conclusions[original].claim == "A durable principle."
+    assert secret not in json.dumps(runtime.repository.export())

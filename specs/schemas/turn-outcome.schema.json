@@ -150,6 +150,13 @@
       "title": "Turn Id",
       "type": "string"
     },
+    "written_conclusion_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Written Conclusion Ids",
+      "type": "array"
+    },
     "written_memory_ids": {
       "items": {
         "type": "string"

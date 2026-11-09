@@ -1,6 +1,10 @@
 """Autonomous Identity Scaffolding API with legacy ACS compatibility."""
 
 from acs import (
+    ConclusionCandidate,
+    ConclusionEntry,
+    ConclusionKind,
+    ConclusionStatus,
     EventSourcedMemoryRepository,
     GateAction,
     GateDecision,
@@ -27,6 +31,10 @@ from acs import (
 )
 
 __all__ = [
+    "ConclusionCandidate",
+    "ConclusionEntry",
+    "ConclusionKind",
+    "ConclusionStatus",
     "EventSourcedMemoryRepository",
     "GateAction",
     "GateDecision",

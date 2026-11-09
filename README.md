@@ -31,7 +31,8 @@ agent's history.
   `tool_derived` and `imported_archive` never collapse into one unlabeled blob.
 - A deterministic memory gate with salience, stability, confidence, usefulness,
   imposition-risk and duplicate checks.
-- Revision lineage: the current conclusion and every earlier version remain inspectable.
+- Revision lineage: the current memory and every earlier version remain inspectable.
+- A separate **Conclusion Ledger** stores durable inferences without pretending that raw memories are conclusions. Conclusions retain evidence, counterevidence, dependency IDs, provenance, confidence, stability, identity relevance and full revision history.
 - Lexical retrieval with recency, stability and provenance weighting; SQLite FTS for the
   local runtime.
 - Pre-response pressure detection and stance selection without turning disagreement into
@@ -130,6 +131,9 @@ ais --workspace ./kai-local memory revise mem_ab12cd34 \
 ais --workspace ./kai-local memory retract mem_ab12cd34 --reason "Superseded by evidence."
 ais --workspace ./kai-local memory review
 ais --workspace ./kai-local export --output exports/portable-self-state.json
+
+# Python API: keep evidence and conclusions separate
+# repo.add_conclusion(ConclusionCandidate(...))
 ```
 
 Every manual action is labeled `user_suggested` in the audit log. An operator cannot silently
@@ -175,3 +179,24 @@ No model server or paid key is required for the unit and pipeline tests.
 The package is a controller and reference implementation, not a hosted chat product. Real
 model smoke tests require your Ollama instance or API key; the test suite uses a deterministic
 fake client and never spends API credits.
+
+
+## Identity conclusions
+
+AIS distinguishes **what happened** from **what the agent concluded from what happened**.
+A raw memory can support several conclusions, and a conclusion can depend on several memories
+or earlier conclusions. This matters for identity continuity: an agent should be able to revise
+a belief about itself without deleting the experiences that originally produced it.
+
+Conclusion records carry:
+
+- explicit provenance;
+- evidence and counterevidence IDs;
+- dependency IDs;
+- confidence and stability;
+- an identity-relevance score;
+- revision history and stale/retracted states.
+
+Agent-proposed, user-suggested and tool-derived conclusions remain visibly distinct. A
+user-suggested sentence is not silently relabeled as self-authored identity. Identity-sensitive
+conclusions are intended to be reviewed and reconsolidated rather than destructively replaced.

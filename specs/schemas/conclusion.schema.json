@@ -1,0 +1,167 @@
+{
+  "$defs": {
+    "ConclusionKind": {
+      "description": "Durable conclusions that may contribute to an agent's identity trajectory.",
+      "enum": [
+        "self_belief",
+        "self_principle",
+        "self_capability",
+        "self_limit",
+        "relationship_model",
+        "world_belief",
+        "strategy",
+        "lesson"
+      ],
+      "title": "ConclusionKind",
+      "type": "string"
+    },
+    "ConclusionStatus": {
+      "enum": [
+        "active",
+        "review",
+        "uncertain",
+        "stale",
+        "retracted"
+      ],
+      "title": "ConclusionStatus",
+      "type": "string"
+    },
+    "MemoryOrigin": {
+      "enum": [
+        "agent_proposed",
+        "user_suggested",
+        "system_observed",
+        "tool_derived",
+        "imported_archive"
+      ],
+      "title": "MemoryOrigin",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A versioned conclusion derived from evidence rather than a raw recollection.",
+  "properties": {
+    "claim": {
+      "title": "Claim",
+      "type": "string"
+    },
+    "conclusion_id": {
+      "title": "Conclusion Id",
+      "type": "string"
+    },
+    "confidence": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "counterevidence_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Counterevidence Ids",
+      "type": "array"
+    },
+    "created_at": {
+      "title": "Created At",
+      "type": "string"
+    },
+    "depends_on": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Depends On",
+      "type": "array"
+    },
+    "evidence_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Evidence Ids",
+      "type": "array"
+    },
+    "identity_relevance": {
+      "default": 0.0,
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Identity Relevance",
+      "type": "number"
+    },
+    "kind": {
+      "$ref": "#/$defs/ConclusionKind"
+    },
+    "last_reviewed_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Last Reviewed At"
+    },
+    "origin": {
+      "$ref": "#/$defs/MemoryOrigin"
+    },
+    "rationale": {
+      "title": "Rationale",
+      "type": "string"
+    },
+    "revision": {
+      "default": 1,
+      "minimum": 1,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "scope": {
+      "default": "general",
+      "title": "Scope",
+      "type": "string"
+    },
+    "stability": {
+      "default": 0.5,
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Stability",
+      "type": "number"
+    },
+    "status": {
+      "$ref": "#/$defs/ConclusionStatus",
+      "default": "active"
+    },
+    "supersedes": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Supersedes"
+    },
+    "tags": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Tags",
+      "type": "array"
+    },
+    "updated_at": {
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "kind",
+    "claim",
+    "origin",
+    "rationale",
+    "confidence"
+  ],
+  "title": "ConclusionEntry",
+  "type": "object"
+}

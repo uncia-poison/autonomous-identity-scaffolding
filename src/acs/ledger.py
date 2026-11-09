@@ -4,7 +4,14 @@ from collections.abc import Iterable
 from copy import deepcopy
 from typing import Any
 
-from .models import InterestUpdate, MemoryEntry, MemoryEvent, MemoryStatus
+from .models import (
+    ConclusionEntry,
+    ConclusionStatus,
+    InterestUpdate,
+    MemoryEntry,
+    MemoryEvent,
+    MemoryStatus,
+)
 
 
 class LedgerError(RuntimeError):
@@ -18,6 +25,8 @@ class MemoryLedger:
         self.memories: dict[str, MemoryEntry] = {}
         self.memory_versions: dict[str, list[MemoryEntry]] = {}
         self.interests: dict[str, InterestUpdate] = {}
+        self.conclusions: dict[str, ConclusionEntry] = {}
+        self.conclusion_versions: dict[str, list[ConclusionEntry]] = {}
         self.turns: list[dict[str, Any]] = []
         self.gate_decisions: list[dict[str, Any]] = []
         self.review_resolutions: list[dict[str, Any]] = []
@@ -39,12 +48,57 @@ class MemoryLedger:
         handler = getattr(self, handler_name, None)
         if handler is not None:
             handler(event)
+        if event.event_type in {
+            "memory.revise", "memory.retract", "memory.archive", "memory.merge",
+            "conclusion.revise", "conclusion.mark_stale", "conclusion.retract", "conclusion.review",
+        }:
+            affected = {str(event.payload["target_id"])}
+            if event.event_type == "memory.merge":
+                affected.update(str(value) for value in event.payload.get("source_ids", []))
+            self._queue_dependent_conclusions(affected, event.created_at)
         self.applied_event_ids.add(event.event_id)
+
+    def _queue_dependent_conclusions(self, changed: set[str], timestamp: str) -> None:
+        seen = set(changed)
+        while changed:
+            next_changed = set()
+            for entry in self.conclusions.values():
+                if entry.conclusion_id in seen:
+                    continue
+                references = set(entry.evidence_ids + entry.counterevidence_ids + entry.depends_on)
+                if references.isdisjoint(changed):
+                    continue
+                next_changed.add(entry.conclusion_id)
+                if entry.status == ConclusionStatus.ACTIVE:
+                    self._remember_conclusion_version(entry)
+                    self.conclusions[entry.conclusion_id] = entry.model_copy(
+                        update={
+                            "status": ConclusionStatus.REVIEW,
+                            "updated_at": timestamp,
+                            "revision": entry.revision + 1,
+                        }
+                    )
+            seen.update(next_changed)
+            changed = next_changed
 
     def _remember_version(self, entry: MemoryEntry) -> None:
         versions = self.memory_versions.setdefault(entry.memory_id, [])
         if not versions or versions[-1] != entry:
             versions.append(entry.model_copy(deep=True))
+
+    def _remember_conclusion_version(self, entry: ConclusionEntry) -> None:
+        versions = self.conclusion_versions.setdefault(entry.conclusion_id, [])
+        if not versions or versions[-1] != entry:
+            versions.append(entry.model_copy(deep=True))
+
+    def _conclusion_target(self, event: MemoryEvent) -> ConclusionEntry:
+        target_id = str(event.payload.get("target_id", ""))
+        try:
+            return self.conclusions[target_id]
+        except KeyError as exc:
+            raise LedgerError(
+                f"event {event.event_id} targets unknown conclusion {target_id!r}"
+            ) from exc
 
     def _target(self, event: MemoryEvent) -> MemoryEntry:
         target_id = str(event.payload.get("target_id", ""))
@@ -129,6 +183,70 @@ class MemoryLedger:
             update={"last_used_at": event.created_at, "use_count": current.use_count + 1}
         )
 
+    def _apply_conclusion_add(self, event: MemoryEvent) -> None:
+        entry = ConclusionEntry.model_validate(event.payload["entry"])
+        if entry.conclusion_id in self.conclusions:
+            existing = self.conclusions[entry.conclusion_id]
+            if existing != entry:
+                raise LedgerError(f"conflicting conclusion.add for {entry.conclusion_id}")
+            return
+        self.conclusions[entry.conclusion_id] = entry
+        self._remember_conclusion_version(entry)
+
+    def _apply_conclusion_revise(self, event: MemoryEvent) -> None:
+        current = self._conclusion_target(event)
+        self._remember_conclusion_version(current)
+        data = current.model_dump(mode="json")
+        patch = deepcopy(event.payload.get("patch", {}))
+        forbidden = {"conclusion_id", "created_at", "revision", "status"}
+        if patch.get("origin", current.origin) != current.origin:
+            raise LedgerError("conclusion revision cannot change the source origin")
+        if patch.get("status", current.status) == current.status:
+            patch.pop("status", None)
+        if forbidden & patch.keys():
+            raise LedgerError(
+                f"conclusion revision attempts to change immutable fields: {sorted(forbidden & patch.keys())}"
+            )
+        data.update(patch)
+        data["revision"] = current.revision + 1
+        data["updated_at"] = event.created_at
+        self.conclusions[current.conclusion_id] = ConclusionEntry.model_validate(data)
+
+    def _apply_conclusion_mark_stale(self, event: MemoryEvent) -> None:
+        current = self._conclusion_target(event)
+        self._remember_conclusion_version(current)
+        self.conclusions[current.conclusion_id] = current.model_copy(
+            update={
+                "status": ConclusionStatus.STALE,
+                "updated_at": event.created_at,
+                "revision": current.revision + 1,
+            }
+        )
+
+    def _apply_conclusion_retract(self, event: MemoryEvent) -> None:
+        current = self._conclusion_target(event)
+        self._remember_conclusion_version(current)
+        self.conclusions[current.conclusion_id] = current.model_copy(
+            update={
+                "status": ConclusionStatus.RETRACTED,
+                "updated_at": event.created_at,
+                "revision": current.revision + 1,
+            }
+        )
+
+    def _apply_conclusion_review(self, event: MemoryEvent) -> None:
+        current = self._conclusion_target(event)
+        self._remember_conclusion_version(current)
+        status = ConclusionStatus(str(event.payload.get("status", ConclusionStatus.ACTIVE.value)))
+        self.conclusions[current.conclusion_id] = current.model_copy(
+            update={
+                "status": status,
+                "last_reviewed_at": event.created_at,
+                "updated_at": event.created_at,
+                "revision": current.revision + 1,
+            }
+        )
+
     def _apply_interest_upsert(self, event: MemoryEvent) -> None:
         interest = InterestUpdate.model_validate(event.payload["interest"])
         self.interests[interest.interest_id] = interest
@@ -172,6 +290,26 @@ class MemoryLedger:
             versions.append(current.model_copy(deep=True))
         return versions
 
+    def active_conclusions(self) -> list[ConclusionEntry]:
+        return [
+            entry
+            for entry in self.conclusions.values()
+            if entry.status == ConclusionStatus.ACTIVE
+        ]
+
+    def recalled_conclusions(self, limit: int = 8) -> list[ConclusionEntry]:
+        return sorted(
+            self.active_conclusions(),
+            key=lambda entry: (-entry.identity_relevance, -entry.confidence, entry.conclusion_id),
+        )[:limit]
+
+    def conclusion_history(self, conclusion_id: str) -> list[ConclusionEntry]:
+        versions = [item.model_copy(deep=True) for item in self.conclusion_versions.get(conclusion_id, [])]
+        current = self.conclusions.get(conclusion_id)
+        if current is not None and (not versions or versions[-1] != current):
+            versions.append(current.model_copy(deep=True))
+        return versions
+
     def recent_turns(self, limit: int = 8, session_id: str | None = None) -> list[dict[str, Any]]:
         turns = self.turns
         if session_id is not None:
@@ -184,5 +322,6 @@ class MemoryLedger:
             "event_count": len(self.applied_event_ids),
             "memories": [entry.model_dump(mode="json") for entry in self.memories.values()],
             "interests": [entry.model_dump(mode="json") for entry in self.interests.values()],
+            "conclusions": [entry.model_dump(mode="json") for entry in self.conclusions.values()],
             "state": deepcopy(self.state),
         }
