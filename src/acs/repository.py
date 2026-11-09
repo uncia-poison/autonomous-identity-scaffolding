@@ -24,6 +24,7 @@ from .models import (
     MemoryStatus,
 )
 from .retrieval import MemoryRetriever, RetrievedMemory
+from .security import contains_obvious_secret
 from .storage.base import EventStore
 from .text import tokens
 
@@ -253,9 +254,13 @@ class EventSourcedMemoryRepository:
         )
         self.store.write_snapshot(self.ledger.to_snapshot())
 
-    def add_conclusion(self, candidate: ConclusionCandidate) -> str:
+    def add_conclusion(
+        self, candidate: ConclusionCandidate, *, status: ConclusionStatus = ConclusionStatus.ACTIVE,
+    ) -> str:
         """Persist a durable inference without collapsing it into raw memory."""
-        entry = ConclusionEntry.from_candidate(candidate)
+        if contains_obvious_secret(candidate.model_dump_json()):
+            raise ValueError("possible secret in conclusion candidate")
+        entry = ConclusionEntry.from_candidate(candidate, status=status)
         self.append(
             MemoryEvent(
                 event_type="conclusion.add",
@@ -279,11 +284,14 @@ class EventSourcedMemoryRepository:
         current = self.ledger.conclusions.get(conclusion_id)
         if current is None:
             raise KeyError(conclusion_id)
+        if contains_obvious_secret(candidate.model_dump_json()):
+            raise ValueError("possible secret in conclusion candidate")
+        if candidate.origin != current.origin:
+            raise ValueError("conclusion revision cannot change the source origin")
         patch = {
             "kind": candidate.kind.value,
             "claim": candidate.claim,
             "scope": candidate.scope,
-            "origin": candidate.origin.value,
             "rationale": candidate.rationale,
             "confidence": candidate.confidence,
             "stability": candidate.stability,
@@ -292,7 +300,7 @@ class EventSourcedMemoryRepository:
             "counterevidence_ids": list(dict.fromkeys(candidate.counterevidence_ids)),
             "depends_on": list(dict.fromkeys(candidate.depends_on)),
             "tags": list(dict.fromkeys(candidate.tags)),
-            "status": ConclusionStatus.ACTIVE.value,
+            "status": current.status.value,
         }
         self.append(
             MemoryEvent(
@@ -328,9 +336,15 @@ class EventSourcedMemoryRepository:
         status: ConclusionStatus = ConclusionStatus.ACTIVE,
         reason: str,
         actor: MemoryOrigin = MemoryOrigin.AGENT_PROPOSED,
+        expected_revision: int | None = None,
     ) -> None:
-        if conclusion_id not in self.ledger.conclusions:
-            raise KeyError(conclusion_id)
+        current = self.ledger.conclusions[conclusion_id]
+        if expected_revision is not None and current.revision != expected_revision:
+            raise ValueError("conclusion changed since review")
+        if current.status == ConclusionStatus.RETRACTED:
+            raise ValueError("retracted conclusion cannot be reopened through review")
+        if not reason.strip() or contains_obvious_secret(reason):
+            raise ValueError("review requires a nonempty reason without credentials")
         self.append(
             MemoryEvent(
                 event_type="conclusion.review",

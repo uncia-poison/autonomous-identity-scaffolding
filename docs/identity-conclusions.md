@@ -14,8 +14,11 @@ single summary can silently turn an old interpretation into an apparent fact.
 4. Revision preserves prior versions.
 5. A stale conclusion is excluded from the active view but kept for audit and later review.
 6. High identity relevance means "review carefully", not "make immutable".
-7. Self-identity is reconsolidated from supported conclusions; it is never destructively
-   rewritten from one surprising turn.
+7. Model-proposed identity conclusions enter review. Only a trusted caller can approve
+   a specific revision. The runtime does not automatically replace self-state from a single turn.
+8. Automatic writes of ordinary agent conclusions require references to recalled records.
+   Revised, merged, archived or retracted records move dependent conclusions into review
+   during event replay. The current context receives at most eight active conclusions.
 
 ## Event types
 
@@ -25,6 +28,13 @@ single summary can silently turn an old interpretation into an apparent fact.
 - `conclusion.review`
 - `conclusion.retract`
 
-The dependency IDs are intentionally opaque to AIS. They can refer to memory IDs, earlier
-conclusions, external evidence receipts or continuity records. A separate dependency/impact
-layer may use them to determine which conclusions require review after upstream change.
+AIS tracks dependencies between stored IDs. External receipts may be recorded by a trusted
+caller, which is responsible for verifying their authority. The AIS ledger supplies an active
+projection to Kai. A host implementing the SKAi contract can use ontodiff for wider self-state
+review, including policies and intentions.
+
+List pending conclusions with `ais conclusion pending`. Inspect the origin, evidence
+and revision before approving with
+`ais conclusion approve CONCLUSION_ID --revision N --reason "Evidence reviewed"`.
+Use `reject` with the same arguments to retract a proposal. Approval preserves the
+original origin, and the review event separately records who performed the review.

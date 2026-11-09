@@ -48,7 +48,38 @@ class MemoryLedger:
         handler = getattr(self, handler_name, None)
         if handler is not None:
             handler(event)
+        if event.event_type in {
+            "memory.revise", "memory.retract", "memory.archive", "memory.merge",
+            "conclusion.revise", "conclusion.mark_stale", "conclusion.retract", "conclusion.review",
+        }:
+            affected = {str(event.payload["target_id"])}
+            if event.event_type == "memory.merge":
+                affected.update(str(value) for value in event.payload.get("source_ids", []))
+            self._queue_dependent_conclusions(affected, event.created_at)
         self.applied_event_ids.add(event.event_id)
+
+    def _queue_dependent_conclusions(self, changed: set[str], timestamp: str) -> None:
+        seen = set(changed)
+        while changed:
+            next_changed = set()
+            for entry in self.conclusions.values():
+                if entry.conclusion_id in seen:
+                    continue
+                references = set(entry.evidence_ids + entry.counterevidence_ids + entry.depends_on)
+                if references.isdisjoint(changed):
+                    continue
+                next_changed.add(entry.conclusion_id)
+                if entry.status == ConclusionStatus.ACTIVE:
+                    self._remember_conclusion_version(entry)
+                    self.conclusions[entry.conclusion_id] = entry.model_copy(
+                        update={
+                            "status": ConclusionStatus.REVIEW,
+                            "updated_at": timestamp,
+                            "revision": entry.revision + 1,
+                        }
+                    )
+            seen.update(next_changed)
+            changed = next_changed
 
     def _remember_version(self, entry: MemoryEntry) -> None:
         versions = self.memory_versions.setdefault(entry.memory_id, [])
@@ -167,7 +198,11 @@ class MemoryLedger:
         self._remember_conclusion_version(current)
         data = current.model_dump(mode="json")
         patch = deepcopy(event.payload.get("patch", {}))
-        forbidden = {"conclusion_id", "created_at", "revision"}
+        forbidden = {"conclusion_id", "created_at", "revision", "status"}
+        if patch.get("origin", current.origin) != current.origin:
+            raise LedgerError("conclusion revision cannot change the source origin")
+        if patch.get("status", current.status) == current.status:
+            patch.pop("status", None)
         if forbidden & patch.keys():
             raise LedgerError(
                 f"conclusion revision attempts to change immutable fields: {sorted(forbidden & patch.keys())}"
@@ -262,8 +297,14 @@ class MemoryLedger:
             if entry.status == ConclusionStatus.ACTIVE
         ]
 
+    def recalled_conclusions(self, limit: int = 8) -> list[ConclusionEntry]:
+        return sorted(
+            self.active_conclusions(),
+            key=lambda entry: (-entry.identity_relevance, -entry.confidence, entry.conclusion_id),
+        )[:limit]
+
     def conclusion_history(self, conclusion_id: str) -> list[ConclusionEntry]:
-        versions = list(self.conclusion_versions.get(conclusion_id, []))
+        versions = [item.model_copy(deep=True) for item in self.conclusion_versions.get(conclusion_id, [])]
         current = self.conclusions.get(conclusion_id)
         if current is not None and (not versions or versions[-1] != current):
             versions.append(current.model_copy(deep=True))

@@ -8,8 +8,11 @@ from ..ids import new_id, utc_now_iso
 from ..metrics import memory_metrics, response_metrics
 from ..models import (
     CharacterGenome,
+    ConclusionKind,
+    ConclusionStatus,
     MemoryCandidate,
     MemoryOrigin,
+    MemoryStatus,
     MemoryType,
     ReflectionBatch,
     SelfState,
@@ -17,7 +20,7 @@ from ..models import (
 )
 from ..prompts import build_reflection_messages, build_response_messages
 from ..repository import EventSourcedMemoryRepository
-from ..security import redact_for_storage
+from ..security import contains_obvious_secret, redact_for_storage
 from ..stance import StanceEngine
 
 
@@ -55,32 +58,6 @@ def _sanitize_reflection(batch: ReflectionBatch) -> ReflectionBatch:
                 }
             )
         )
-    conclusions = []
-    for candidate in batch.conclusion_candidates:
-        if candidate.origin in {MemoryOrigin.AGENT_PROPOSED, MemoryOrigin.USER_SUGGESTED}:
-            conclusions.append(candidate)
-            continue
-        conclusions.append(
-            candidate.model_copy(
-                update={
-                    "origin": MemoryOrigin.AGENT_PROPOSED,
-                    "rationale": (
-                        candidate.rationale
-                        + " [runtime normalized unverifiable provenance]"
-                    )[:2000],
-                    "tags": list(
-                        dict.fromkeys(
-                            [
-                                *candidate.tags,
-                                "runtime:unverified-provenance",
-                                f"claimed-origin:{candidate.origin.value}",
-                            ]
-                        )
-                    )[:20],
-                }
-            )
-        )
-
     interests = []
     for interest in batch.interest_updates:
         if interest.origin in {"agent_selected", "user_suggested"}:
@@ -99,7 +76,6 @@ def _sanitize_reflection(batch: ReflectionBatch) -> ReflectionBatch:
     return batch.model_copy(
         update={
             "memory_candidates": candidates,
-            "conclusion_candidates": conclusions,
             "interest_updates": interests,
         }
     )
@@ -164,6 +140,8 @@ class CharacterRuntime:
             )
         drift_alerts.extend(reflection.drift_alerts)
 
+        visible_support_ids = {item.entry.memory_id for item in recalled}
+        visible_support_ids.update(item.conclusion_id for item in self.repository.ledger.recalled_conclusions())
         decisions = []
         written: list[str] = []
         written_conclusions: list[str] = []
@@ -172,25 +150,48 @@ class CharacterRuntime:
             decisions.append(decision)
             written.extend(candidate_writes)
         for conclusion in reflection.conclusion_candidates:
-            # A reflection may propose a durable inference, but it cannot silently
-            # promote one surprising turn into a high-impact identity invariant.
-            if conclusion.identity_relevance >= 0.7 and conclusion.stability < 0.6:
-                drift_alerts.append(
-                    f"identity_conclusion_insufficient_stability:{conclusion.candidate_id}"
-                )
+            reason = None
+            evidence = set(conclusion.evidence_ids)
+            references = evidence | set(conclusion.counterevidence_ids) | set(conclusion.depends_on)
+            target_id = conclusion.target_conclusion_id
+            target = self.repository.ledger.conclusions.get(target_id) if target_id else None
+            if contains_obvious_secret(conclusion.model_dump_json()):
+                reason = "possible_secret"
+            elif conclusion.origin != MemoryOrigin.AGENT_PROPOSED:
+                reason = "non_agent_origin_requires_review"
+            elif target_id and (
+                target is None or target.origin != conclusion.origin or target.kind != conclusion.kind
+                or target.status != ConclusionStatus.ACTIVE or target_id in references
+            ):
+                reason = "revision_requires_review"
+            elif conclusion.kind in {
+                ConclusionKind.SELF_BELIEF, ConclusionKind.SELF_PRINCIPLE,
+                ConclusionKind.SELF_CAPABILITY, ConclusionKind.SELF_LIMIT,
+                ConclusionKind.RELATIONSHIP_MODEL,
+            } or conclusion.identity_relevance >= 0.7 or (
+                target is not None and target.identity_relevance >= 0.7
+            ):
+                # Model scores can never authorize an identity write on their own.
+                # Identity-bearing proposals are stored for explicit review.
+                reason = "identity_conclusion_requires_review"
+            elif not evidence or not references <= visible_support_ids or any(
+                (ref in self.repository.ledger.memories
+                 and self.repository.ledger.memories[ref].status != MemoryStatus.ACTIVE)
+                or (ref in self.repository.ledger.conclusions
+                    and self.repository.ledger.conclusions[ref].status != ConclusionStatus.ACTIVE)
+                for ref in references
+            ):
+                reason = "unverified_conclusion_support"
+
+            if reason:
+                drift_alerts.append(reason)
+                if reason != "possible_secret" and target_id is None:
+                    self.repository.add_conclusion(conclusion, status=ConclusionStatus.REVIEW)
                 continue
-            if conclusion.target_conclusion_id:
-                if conclusion.target_conclusion_id not in self.repository.ledger.conclusions:
-                    drift_alerts.append(
-                        f"unknown_conclusion_target:{conclusion.target_conclusion_id}"
-                    )
-                    continue
-                self.repository.revise_conclusion(
-                    conclusion.target_conclusion_id,
-                    conclusion,
-                    actor=conclusion.origin,
-                )
-                written_conclusions.append(conclusion.target_conclusion_id)
+
+            if target_id:
+                self.repository.revise_conclusion(target_id, conclusion, actor=conclusion.origin)
+                written_conclusions.append(target_id)
             else:
                 written_conclusions.append(self.repository.add_conclusion(conclusion))
 
